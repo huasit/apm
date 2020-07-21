@@ -31,7 +31,8 @@ public class Interceptor implements HandlerInterceptor {
             throws Exception {
         request.setAttribute("contextPath", contextPath);
         this.localeService.dealLanguage(request, response);
-        return this.userLoginService.checkLogin(request, response);
+        //return this.userLoginService.checkLogin(request, response);
+        return true;
     }
 
     /**
@@ -56,11 +57,11 @@ public class Interceptor implements HandlerInterceptor {
      *
      */
     @Autowired
-    UserLoginService userLoginService;
+    LocaleService localeService;
 
     /**
      *
      */
     @Autowired
-    LocaleService localeService;
+    UserLoginService userLoginService;
 }
