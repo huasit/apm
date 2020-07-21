@@ -33,7 +33,7 @@ public class MainController {
         User loginUser = this.userLoginService.getLoginUser(request);
         model.addAttribute("acceptLanguages", this.localeService.getAcceptLanguages());
         model.addAttribute("currentLanguage", this.localeService.getCurrentLanguage(request));
-        return "core/index/main";
+        return "core/index";
     }
 
     /**
@@ -45,7 +45,7 @@ public class MainController {
         if (username != null && !"".equals(username)) {
             model.addAttribute("username", username);
         }
-        return "core/login/main";
+        return "core/login";
     }
 
     /**
@@ -84,11 +84,11 @@ public class MainController {
      *
      */
     @Autowired
-    UserLoginService userLoginService;
+    LocaleService localeService;
 
     /**
      *
      */
     @Autowired
-    LocaleService localeService;
+    UserLoginService userLoginService;
 }
