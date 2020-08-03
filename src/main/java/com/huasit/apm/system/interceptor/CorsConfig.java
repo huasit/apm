@@ -16,7 +16,7 @@ public class CorsConfig extends OncePerRequestFilter {
         response.setHeader("Access-Control-Allow-Origin", "http://192.168.1.200:8888");
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         response.setHeader("Access-Control-Max-Age", "3600");
-        response.setHeader("Access-Control-Allow-Headers", "*");
+        response.setHeader("Access-Control-Allow-Headers", "ContentType");
         response.addHeader("Access-Control-Allow-Credentials", "true");
         if ("OPTIONS".equals(request.getMethod())) {
             response.setStatus(HttpServletResponse.SC_OK);

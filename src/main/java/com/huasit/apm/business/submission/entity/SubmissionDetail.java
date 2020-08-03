@@ -7,8 +7,6 @@ import java.io.Serializable;
 /**
  *
  */
-@Entity
-@Table(name = "BUSINESS_SUBMISSION_DETAIL")
 public class SubmissionDetail implements Serializable {
 
     /**
@@ -24,7 +22,7 @@ public class SubmissionDetail implements Serializable {
     @JsonBackReference
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "submissionFormId", nullable = false)
-    private SubmissionForm submissionForm;
+    private Submission submission;
 
     /**
      *
@@ -42,12 +40,45 @@ public class SubmissionDetail implements Serializable {
      *
      */
     @Column(nullable = false)
-    private Integer[] mFiles;
-
-    /**
-     *
-     */
-    @Column(nullable = false)
     private String mNote;
-    
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Submission getSubmission() {
+        return submission;
+    }
+
+    public void setSubmission(Submission submission) {
+        this.submission = submission;
+    }
+
+    public Integer getmId() {
+        return mId;
+    }
+
+    public void setmId(Integer mId) {
+        this.mId = mId;
+    }
+
+    public String getmName() {
+        return mName;
+    }
+
+    public void setmName(String mName) {
+        this.mName = mName;
+    }
+
+    public String getmNote() {
+        return mNote;
+    }
+
+    public void setmNote(String mNote) {
+        this.mNote = mNote;
+    }
 }
