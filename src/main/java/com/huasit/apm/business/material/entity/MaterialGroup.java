@@ -1,19 +1,20 @@
-package com.huasit.apm.core.user.entity;
+package com.huasit.apm.business.material.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
  */
 @Entity
-@Table(name = "CORE_USER")
-public class User implements Serializable {
+@Table(name = "BUSINESS_MATERIAL_GROUP")
+public class MaterialGroup implements Serializable {
 
-	/**
+    /**
      *
      */
     @Id
@@ -30,71 +31,38 @@ public class User implements Serializable {
     /**
      *
      */
-    @JsonIgnore
     @Column(nullable = false)
-    private Boolean login;
-
-    /**
-     *
-     */
-    @Column(nullable = false, length = 100)
     private String name;
 
     /**
      *
      */
-    @Column(nullable = false, length = 100)
-    private String username;
-
-    /**
-     *
-     */
-    @JsonIgnore
-    @Column(nullable = false, length = 100)
-    private String password;
-
-    /**
-     *
-     */
-    @Column(length = 100)
-    private String email;
-
-    /**
-     *
-     */
-    @Column(length = 100)
-    private String telphone;
-
-    /**
-     *
-     */
-    @Column
+    @Column(nullable = false)
     private Long modifyId;
 
     /**
      *
      */
-    @Column
+    @Column(nullable = false)
     private Date modifyTime;
 
     /**
      *
      */
-    @Column
+    @Column(nullable = false)
     private Long creatorId;
 
     /**
      *
      */
-    @Column
+    @Column(nullable = false)
     private Date createTime;
 
     /**
      *
      */
-    @JsonIgnore
-    @Transient
-    private UserToken token;
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "group", orphanRemoval = true)
+    private List<MaterialGroupDetail> details;
 
     public Long getId() {
         return id;
@@ -112,52 +80,12 @@ public class User implements Serializable {
         this.del = del;
     }
 
-    public Boolean getLogin() {
-        return login;
-    }
-
-    public void setLogin(Boolean login) {
-        this.login = login;
-    }
-
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getTelphone() {
-        return telphone;
-    }
-
-    public void setTelphone(String telphone) {
-        this.telphone = telphone;
     }
 
     public Long getModifyId() {
@@ -192,11 +120,11 @@ public class User implements Serializable {
         this.createTime = createTime;
     }
 
-    public UserToken getToken() {
-        return token;
+    public List<MaterialGroupDetail> getDetails() {
+        return details;
     }
 
-    public void setToken(UserToken token) {
-        this.token = token;
+    public void setDetails(List<MaterialGroupDetail> details) {
+        this.details = details;
     }
 }

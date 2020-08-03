@@ -1,4 +1,4 @@
-package com.huasit.apm.core.user.entity;
+package com.huasit.apm.business.material.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -10,10 +10,10 @@ import java.util.Date;
  *
  */
 @Entity
-@Table(name = "CORE_USER")
-public class User implements Serializable {
+@Table(name = "BUSINESS_MATERIAL")
+public class Material implements Serializable {
 
-	/**
+    /**
      *
      */
     @Id
@@ -30,71 +30,39 @@ public class User implements Serializable {
     /**
      *
      */
-    @JsonIgnore
     @Column(nullable = false)
-    private Boolean login;
-
-    /**
-     *
-     */
-    @Column(nullable = false, length = 100)
     private String name;
 
     /**
      *
      */
-    @Column(nullable = false, length = 100)
-    private String username;
+    @Column(nullable = false)
+    private boolean required;
 
     /**
      *
      */
-    @JsonIgnore
-    @Column(nullable = false, length = 100)
-    private String password;
-
-    /**
-     *
-     */
-    @Column(length = 100)
-    private String email;
-
-    /**
-     *
-     */
-    @Column(length = 100)
-    private String telphone;
-
-    /**
-     *
-     */
-    @Column
+    @Column(nullable = false)
     private Long modifyId;
 
     /**
      *
      */
-    @Column
+    @Column(nullable = false)
     private Date modifyTime;
 
     /**
      *
      */
-    @Column
+    @Column(nullable = false)
     private Long creatorId;
 
     /**
      *
      */
-    @Column
-    private Date createTime;
 
-    /**
-     *
-     */
-    @JsonIgnore
-    @Transient
-    private UserToken token;
+    @Column(nullable = false)
+    private Date createTime;
 
     public Long getId() {
         return id;
@@ -112,14 +80,6 @@ public class User implements Serializable {
         this.del = del;
     }
 
-    public Boolean getLogin() {
-        return login;
-    }
-
-    public void setLogin(Boolean login) {
-        this.login = login;
-    }
-
     public String getName() {
         return name;
     }
@@ -128,36 +88,12 @@ public class User implements Serializable {
         this.name = name;
     }
 
-    public String getUsername() {
-        return username;
+    public boolean isRequired() {
+        return required;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getTelphone() {
-        return telphone;
-    }
-
-    public void setTelphone(String telphone) {
-        this.telphone = telphone;
+    public void setRequired(boolean required) {
+        this.required = required;
     }
 
     public Long getModifyId() {
@@ -190,13 +126,5 @@ public class User implements Serializable {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
-    }
-
-    public UserToken getToken() {
-        return token;
-    }
-
-    public void setToken(UserToken token) {
-        this.token = token;
     }
 }

@@ -15,18 +15,18 @@ public interface UserRepository extends CrudRepository<User, Long>, JpaSpecifica
     /**
      *
      */
-    @Query("select u from User u where del=false and id=?1")
+    @Query("from User where id=?1")
     User findUserById(Long id);
 
     /**
      *
      */
-    @Query("select u from User u where del=false and login=true and username=?1 and password=?2")
+    @Query("from User where del=false and login=true and username=?1 and password=?2")
     User findLoginUserByUsernameAndPassword(String username, String password);
 
     /**
      *
      */
-    @Query("select u from User u where del=false and login=true and id in (select userId from UserToken where enable=true and token=?1)")
+    @Query("from User where del=false and login=true and id in (select userId from UserToken where enable=true and token=?1)")
     User findLoginUserByToken(String token);
 }

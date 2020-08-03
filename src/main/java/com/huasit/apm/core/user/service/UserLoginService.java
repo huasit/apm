@@ -21,8 +21,13 @@ public class UserLoginService {
 	/**
 	 *
 	 */
-	@Value("${server.context-path}")
+	@Value("${server.context-path:}")
 	private String contextPath;
+
+	/**
+	 *
+	 */
+	public static final String USER_IN_REQUEST = "loginUser";
 
 	/**
 	 *
@@ -33,27 +38,6 @@ public class UserLoginService {
 	 *
 	 */
 	public static final String USERNAME_IN_COOKIE = "apm_user";
-
-	/**
-	 *
-	 */
-	public static final String USER_IN_REQUEST = "loginUser";
-
-	/**
-	 *
-	 */
-	public User userLogin(String username, String password, HttpServletRequest request, HttpServletResponse response)
-			throws Exception {
-		User user = this.userService.getLoginUserByUsernameAndPassword(username, password);
-		if (user == null) {
-			return null;
-		}
-		WebUtil.addCookie(response, USERNAME_IN_COOKIE, username);
-		UserToken userToken = this.userService.createUserToken(user, WebUtil.getIpAddress(request));
-		WebUtil.addCookie(response, TOKEN_IN_COOKIE, userToken.getToken());
-		request.setAttribute(USER_IN_REQUEST, user);
-		return user;
-	}
 
 	/**
 	 *
@@ -75,9 +59,14 @@ public class UserLoginService {
 	/**
 	 *
 	 */
-	public void userLogout(HttpServletRequest request, HttpServletResponse response) {
-		request.removeAttribute(USER_IN_REQUEST);
-		WebUtil.cleanCookies(response, TOKEN_IN_COOKIE);
+	public User userLogin(String username, String password, HttpServletRequest request) {
+		User user = this.userService.getLoginUserByUsernameAndPassword(username, password);
+		if (user == null) {
+			return null;
+		}
+		UserToken userToken = this.userService.createUserToken(user, WebUtil.getIpAddress(request));
+		user.setToken(userToken);
+		return user;
 	}
 
 	/**
@@ -88,11 +77,28 @@ public class UserLoginService {
 			return true;
 		}
 		User loginUser = this.getLoginUser(request);
-		if (null != loginUser) {
+		if (loginUser != null) {
 			return true;
 		}
 		response.sendRedirect(contextPath + "/login/");
 		return false;
+	}
+
+	/**
+	 *
+	 */
+	public void setCookie(User loginUser, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		WebUtil.addCookie(response, USERNAME_IN_COOKIE, loginUser.getUsername());
+		WebUtil.addCookie(response, TOKEN_IN_COOKIE, loginUser.getToken().getToken());
+		request.setAttribute(USER_IN_REQUEST, loginUser);
+	}
+
+	/**
+	 *
+	 */
+	public void removeCookie(HttpServletRequest request, HttpServletResponse response) {
+		request.removeAttribute(USER_IN_REQUEST);
+		WebUtil.cleanCookies(response, TOKEN_IN_COOKIE);
 	}
 
 	/**
