@@ -1,26 +1,27 @@
 package com.huasit.apm.system.interceptor;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.filter.OncePerRequestFilter;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 @Configuration
-public class CorsConfig implements WebMvcConfigurer {
+public class CorsConfig extends OncePerRequestFilter {
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**").
-                        allowedOrigins("*").
-                        allowedMethods("*").
-                        allowedHeaders("*").
-                        allowCredentials(true).
-                        exposedHeaders(HttpHeaders.SET_COOKIE).maxAge(3600L);
-            }
-        };
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, IOException, ServletException {
+        response.setHeader("Access-Control-Allow-Origin", "http://192.168.1.200:8888");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        response.setHeader("Access-Control-Max-Age", "3600");
+        response.setHeader("Access-Control-Allow-Headers", "*");
+        response.addHeader("Access-Control-Allow-Credentials", "true");
+        if ("OPTIONS".equals(request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+        } else {
+            filterChain.doFilter(request, response);
+        }
     }
 }
