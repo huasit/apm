@@ -26,8 +26,13 @@ public class UserController {
      */
     @ResponseBody
     @GetMapping("/get/")
-    public ResponseEntity<Map<String, Object>> get(@RequestParam("id") Long id, HttpServletRequest request) {
-        User user = this.userService.getUserById(id);
+    public ResponseEntity<Map<String, Object>> get(Long id, HttpServletRequest request) {
+        User user;
+        if(id == null) {
+            user = this.userLoginService.getLoginUser(request);
+        } else {
+            user = this.userService.getUserById(id);
+        }
         return new ResponseEntity<>(ImmutableMap.of("user", user), HttpStatus.OK);
     }
 
