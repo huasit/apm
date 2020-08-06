@@ -1,12 +1,16 @@
 package com.huasit.apm.business.submission.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.huasit.apm.core.file.entity.File;
+
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  *
  */
+@Entity
+@Table(name = "SUBMISSION_DETAIL")
 public class SubmissionDetail implements Serializable {
 
     /**
@@ -15,14 +19,6 @@ public class SubmissionDetail implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
-    /**
-     *
-     */
-    @JsonBackReference
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "submissionFormId", nullable = false)
-    private Submission submission;
 
     /**
      *
@@ -39,8 +35,18 @@ public class SubmissionDetail implements Serializable {
     /**
      *
      */
-    @Column(nullable = false)
     private String mNote;
+
+    /**
+     *
+     */
+    private String mFileIds;
+
+    /**
+     *
+     */
+    @Transient
+    private List<File> mFiles;
 
     public Long getId() {
         return id;
@@ -48,14 +54,6 @@ public class SubmissionDetail implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Submission getSubmission() {
-        return submission;
-    }
-
-    public void setSubmission(Submission submission) {
-        this.submission = submission;
     }
 
     public Integer getmId() {
@@ -80,5 +78,21 @@ public class SubmissionDetail implements Serializable {
 
     public void setmNote(String mNote) {
         this.mNote = mNote;
+    }
+
+    public String getmFileIds() {
+        return mFileIds;
+    }
+
+    public void setmFileIds(String mFileIds) {
+        this.mFileIds = mFileIds;
+    }
+
+    public List<File> getmFiles() {
+        return mFiles;
+    }
+
+    public void setmFiles(List<File> mFiles) {
+        this.mFiles = mFiles;
     }
 }

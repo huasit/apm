@@ -11,7 +11,7 @@ import java.util.List;
  *
  */
 @Entity
-@Table(name = "BUSINESS_MATERIAL_GROUP")
+@Table(name = "MATERIAL_GROUP")
 public class MaterialGroup implements Serializable {
 
     /**

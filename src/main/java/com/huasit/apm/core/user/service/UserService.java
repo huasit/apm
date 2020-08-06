@@ -4,11 +4,22 @@ import com.huasit.apm.core.user.entity.User;
 import com.huasit.apm.core.user.entity.UserRepository;
 import com.huasit.apm.core.user.entity.UserToken;
 import com.huasit.apm.core.user.entity.UserTokenRepository;
+import com.huasit.apm.system.exception.SystemException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -23,6 +34,58 @@ public class UserService {
      */
     public User getUserById(Long id) {
         return this.userRepository.findUserById(id);
+    }
+
+    /**
+     *
+     */
+    public Page<User> list(User form, int page, int pageSize, User loginUser) {
+        PageRequest pageRequest = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Order.desc("id")));
+        return this.userRepository.findAll(new Specification<User>() {
+            @Override
+            public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+                List<Predicate> predicates = new ArrayList<>();
+                predicates.add(cb.equal(root.get("del").as(boolean.class), false));
+                predicates.add(cb.equal(root.get("thirdParty").as(boolean.class), form.isThirdParty()));
+                if (predicates.size() > 0) {
+                    Predicate[] array = new Predicate[predicates.size()];
+                    query.where(predicates.toArray(array));
+                }
+                return query.getRestriction();
+            }
+        }, pageRequest);
+    }
+
+    /**
+     *
+     */
+    public void save(User form, User loginUser) {
+        form.setModifyId(loginUser.getId());
+        form.setModifyTime(new Date());
+        if (form.getId() == null) {
+            form.setThirdParty(true);
+            form.setCreatorId(form.getModifyId());
+            form.setCreateTime(form.getModifyTime());
+        } else {
+            User db = this.userRepository.findUserById(form.getId());
+            if (db == null || db.isDel()) {
+                throw new SystemException(30000);
+            }
+            form.setCreatorId(db.getCreatorId());
+            form.setCreateTime(db.getCreateTime());
+        }
+        User check = this.userRepository.findByUsername(form.getUsername());
+        if(check != null && !check.getId().equals(form.getId())) {
+            throw new SystemException(20100);
+        }
+        this.userRepository.save(form);
+    }
+
+    /**
+     *
+     */
+    public void delete(Long id, User loginUser) {
+        this.userRepository.updateDel(id, true, loginUser.getId(), new Date());
     }
 
     /**

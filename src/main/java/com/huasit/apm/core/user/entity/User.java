@@ -10,7 +10,7 @@ import java.util.Date;
  *
  */
 @Entity
-@Table(name = "CORE_USER")
+@Table(name = "USER")
 public class User implements Serializable {
 
 	/**
@@ -23,16 +23,8 @@ public class User implements Serializable {
     /**
      *
      */
-    @JsonIgnore
     @Column(nullable = false)
-    private Boolean del;
-
-    /**
-     *
-     */
-    @JsonIgnore
-    @Column(nullable = false)
-    private Boolean login;
+    private boolean del;
 
     /**
      *
@@ -49,7 +41,6 @@ public class User implements Serializable {
     /**
      *
      */
-    @JsonIgnore
     @Column(nullable = false, length = 100)
     private String password;
 
@@ -64,6 +55,18 @@ public class User implements Serializable {
      */
     @Column(length = 100)
     private String telphone;
+
+    /**
+     *
+     */
+    @Column
+    private boolean thirdParty;
+
+    /**
+     *
+     */
+    @Column
+    private String thirdPartyName;
 
     /**
      *
@@ -104,20 +107,12 @@ public class User implements Serializable {
         this.id = id;
     }
 
-    public Boolean getDel() {
+    public boolean isDel() {
         return del;
     }
 
-    public void setDel(Boolean del) {
+    public void setDel(boolean del) {
         this.del = del;
-    }
-
-    public Boolean getLogin() {
-        return login;
-    }
-
-    public void setLogin(Boolean login) {
-        this.login = login;
     }
 
     public String getName() {
@@ -158,6 +153,22 @@ public class User implements Serializable {
 
     public void setTelphone(String telphone) {
         this.telphone = telphone;
+    }
+
+    public boolean isThirdParty() {
+        return thirdParty;
+    }
+
+    public void setThirdParty(boolean thirdParty) {
+        this.thirdParty = thirdParty;
+    }
+
+    public String getThirdPartyName() {
+        return thirdPartyName;
+    }
+
+    public void setThirdPartyName(String thirdPartyName) {
+        this.thirdPartyName = thirdPartyName;
     }
 
     public Long getModifyId() {

@@ -8,13 +8,8 @@ import java.util.Date;
  *
  */
 @Entity
-@Table(name = "CORE_USER_TOKEN")
+@Table(name = "USER_TOKEN")
 public class UserToken implements Serializable {
-
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = -7081578024346635807L;
 
 	/**
      *
@@ -27,7 +22,7 @@ public class UserToken implements Serializable {
      *
      */
     @Column(nullable = false)
-    private Boolean enable;
+    private boolean enable;
 
     /**
      *
@@ -61,11 +56,11 @@ public class UserToken implements Serializable {
         this.id = id;
     }
 
-    public Boolean getEnable() {
+    public boolean isEnable() {
         return enable;
     }
 
-    public void setEnable(Boolean enable) {
+    public void setEnable(boolean enable) {
         this.enable = enable;
     }
 

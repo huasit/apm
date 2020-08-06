@@ -11,7 +11,7 @@ import java.util.List;
  *
  */
 @Entity
-@Table(name = "CORE_MENU")
+@Table(name = "MENU")
 public class Menu implements Serializable {
 
     /**
@@ -33,14 +33,14 @@ public class Menu implements Serializable {
      */
     @JsonIgnore
     @Column(nullable = false)
-    private Long pid;
+    private boolean del;
 
     /**
      *
      */
     @JsonIgnore
     @Column(nullable = false)
-    private Boolean del;
+    private Long pid;
 
     /**
      *
@@ -75,7 +75,7 @@ public class Menu implements Serializable {
      */
     @JsonIgnore
     @Column(nullable = false)
-    private String orderIndex;
+    private int orderIndex;
 
     /**
      *
@@ -92,20 +92,20 @@ public class Menu implements Serializable {
         this.id = id;
     }
 
+    public boolean isDel() {
+        return del;
+    }
+
+    public void setDel(boolean del) {
+        this.del = del;
+    }
+
     public Long getPid() {
         return pid;
     }
 
     public void setPid(Long pid) {
         this.pid = pid;
-    }
-
-    public Boolean getDel() {
-        return del;
-    }
-
-    public void setDel(Boolean del) {
-        this.del = del;
     }
 
     public String getName() {
@@ -140,11 +140,11 @@ public class Menu implements Serializable {
         this.icon = icon;
     }
 
-    public String getOrderIndex() {
+    public int getOrderIndex() {
         return orderIndex;
     }
 
-    public void setOrderIndex(String orderIndex) {
+    public void setOrderIndex(int orderIndex) {
         this.orderIndex = orderIndex;
     }
 

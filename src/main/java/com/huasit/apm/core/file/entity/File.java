@@ -6,9 +6,8 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "CORE_FILE")
+@Table(name = "FILE")
 public class File {
-
 
     /**
      *
@@ -22,7 +21,14 @@ public class File {
      */
     @JsonIgnore
     @Column(nullable = false)
-    private Boolean del;
+    private boolean del;
+
+    /**
+     *
+     */
+    @Transient
+    @Column(nullable = false)
+    private String url;
 
     /**
      *
@@ -57,12 +63,20 @@ public class File {
         this.id = id;
     }
 
-    public Boolean getDel() {
+    public boolean isDel() {
         return del;
     }
 
-    public void setDel(Boolean del) {
+    public void setDel(boolean del) {
         this.del = del;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public String getName() {

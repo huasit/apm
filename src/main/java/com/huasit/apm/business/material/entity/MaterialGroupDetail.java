@@ -9,7 +9,7 @@ import java.io.Serializable;
  *
  */
 @Entity
-@Table(name = "BUSINESS_MATERIAL_GROUP_DETAIL")
+@Table(name = "MATERIAL_GROUP_DETAIL")
 public class MaterialGroupDetail implements Serializable {
 
     /**

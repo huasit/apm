@@ -1,5 +1,6 @@
 package com.huasit.apm.business.submission.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
@@ -11,6 +12,8 @@ import java.util.List;
 /**
  *
  */
+@Entity
+@Table(name = "SUBMISSION")
 public class Submission implements Serializable {
 
     /**
@@ -23,13 +26,25 @@ public class Submission implements Serializable {
     /**
      *
      */
+    @JsonIgnore
+    @Column(nullable = false)
+    private boolean del;
+
+    /**
+     *
+     */
+    @Column(nullable = false)
+    private int status;
+
+    /**
+     *
+     */
     @Column(nullable = false)
     private String itemCode;
 
     /**
      *
      */
-    @Column(nullable = false)
     private String auditNo;
     /**
      *
@@ -44,121 +59,119 @@ public class Submission implements Serializable {
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private String feeFrom;
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private BigDecimal budget;
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private String constructionUnit;
     /**
      *
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @Column(nullable = false)
+    @Column
     private Date startDate;
     /**
      *
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @Column(nullable = false)
+    @Column
     private Date endDate;
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private BigDecimal contractMoney;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private BigDecimal constructMoney;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private BigDecimal installMoney;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private BigDecimal constructionUnitApplyFee;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private BigDecimal constructionUnitCheckFee;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private String constructionUnitTel;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private BigDecimal inspectUnitApplyFee;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private BigDecimal inspectUnitCheckFee;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private String inspectUnitTel;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private BigDecimal buildUnitApplyFee;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private BigDecimal buildUnitCheckFee;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private String buildUnitTel;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private String content;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private String description;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private Integer materialGroup;
-
-
 
     /**
      *
@@ -189,7 +202,8 @@ public class Submission implements Serializable {
     /**
      *
      */
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "submissionForm", orphanRemoval = true)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name="sid")
     private List<SubmissionDetail> details;
 
     public Long getId() {
@@ -198,6 +212,14 @@ public class Submission implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public boolean getDel() {
+        return del;
+    }
+
+    public void setDel(boolean del) {
+        this.del = del;
     }
 
     public String getItemCode() {
@@ -430,5 +452,13 @@ public class Submission implements Serializable {
 
     public void setDetails(List<SubmissionDetail> details) {
         this.details = details;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
     }
 }

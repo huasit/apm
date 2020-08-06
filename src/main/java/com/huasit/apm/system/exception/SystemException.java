@@ -3,34 +3,26 @@ package com.huasit.apm.system.exception;
 /**
  *
  */
-@SuppressWarnings("serial")
 public class SystemException extends RuntimeException {
 
     /**
      *
      */
-    public String key;
+    public int code;
 
     /**
      *
      */
-    public Object[] objects;
-
-    /**
-     *
-     */
-    public SystemException(String key, Object ...objects) {
+    public SystemException(int code) {
         super();
-        this.key = key;
-        this.objects = objects;
+        this.code = code;
     }
 
     /**
      *
      */
-    public SystemException(Exception e, String key, Object ...objects) {
+    public SystemException(Exception e, int code) {
         super(e);
-        this.key = key;
-        this.objects = objects;
+        this.code = code;
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -24,10 +25,30 @@ public class FileService {
     /**
      *
      */
+    public File getFileById(Long id){
+        return this.fileRepository.findFileById(id);
+    }
+
+    /**
+     *
+     */
+    public List<File> getFileByIds(List<Long> ids){
+        List<File> files = this.fileRepository.findByIds(ids);
+        if(files != null) {
+            for(File file : files) {
+                file.setUrl("http://192.168.1.100/file/download/?id=" + file.getId());
+            }
+        }
+        return files;
+    }
+
+    /**
+     *
+     */
     public File upload(MultipartFile formFile, User loginUser) {
         File file = new File();
         file.setDel(false);
-        file.setName(formFile.getName());
+        file.setName(formFile.getOriginalFilename());
         file.setPath(this.stroageUploadFile(formFile));
         file.setCreatorId(loginUser.getId());
         file.setCreateTime(new Date());
@@ -47,6 +68,10 @@ public class FileService {
             throw new RuntimeException(e);
         }
         return path + fileName;
+    }
+
+    public String getStoragePath() {
+        return storagePath;
     }
 
     /**
