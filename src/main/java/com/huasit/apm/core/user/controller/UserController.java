@@ -67,21 +67,6 @@ public class UserController {
     /**
      *
      */
-    @ResponseBody
-    @GetMapping("/info/")
-    public ResponseEntity<Map<String, Object>> info(Long id, HttpServletRequest request) {
-        User user;
-        if(id == null) {
-            user = this.userLoginService.getLoginUser(request);
-        } else {
-            user = this.userService.getUserById(id);
-        }
-        return new ResponseEntity<>(ImmutableMap.of("user", user), HttpStatus.OK);
-    }
-
-    /**
-     *
-     */
     @Autowired
     UserService userService;
 
