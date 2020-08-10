@@ -1,6 +1,7 @@
 package com.huasit.apm.business.submission.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.huasit.apm.core.user.entity.User;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
@@ -39,6 +40,13 @@ public class Submission implements Serializable {
     /**
      *
      */
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.REFRESH)
+    @JoinColumn(name="assignedId")
+    private User assigned;
+
+    /**
+     *
+     */
     @Column(nullable = false)
     private String itemCode;
 
@@ -46,6 +54,7 @@ public class Submission implements Serializable {
      *
      */
     private String auditNo;
+
     /**
      *
      */
@@ -214,12 +223,28 @@ public class Submission implements Serializable {
         this.id = id;
     }
 
-    public boolean getDel() {
+    public boolean isDel() {
         return del;
     }
 
     public void setDel(boolean del) {
         this.del = del;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public User getAssigned() {
+        return assigned;
+    }
+
+    public void setAssigned(User assigned) {
+        this.assigned = assigned;
     }
 
     public String getItemCode() {
@@ -452,13 +477,5 @@ public class Submission implements Serializable {
 
     public void setDetails(List<SubmissionDetail> details) {
         this.details = details;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
     }
 }

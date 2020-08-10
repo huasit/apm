@@ -99,6 +99,7 @@ public class UserLoginService {
 	public void removeCookie(HttpServletRequest request, HttpServletResponse response) {
 		request.removeAttribute(USER_IN_REQUEST);
 		WebUtil.cleanCookies(response, TOKEN_IN_COOKIE);
+		WebUtil.cleanCookies(response, USERNAME_IN_COOKIE);
 	}
 
 	/**

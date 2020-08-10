@@ -8,6 +8,7 @@ import com.huasit.apm.core.comment.entity.CommentRepository;
 import com.huasit.apm.core.file.entity.File;
 import com.huasit.apm.core.file.service.FileService;
 import com.huasit.apm.core.user.entity.User;
+import com.huasit.apm.core.user.service.UserService;
 import com.huasit.apm.system.exception.SystemException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -33,9 +34,11 @@ import java.util.List;
 public class SubmissionService implements ApplicationRunner {
 
     // Status
-    // -10 保存/未送审/被退回
+    // -20 被退回
+    // -10 保存/未送审
     // 10 待审核
     // 20 已审核
+    // 30 已分配
 
     /**
      *
@@ -110,7 +113,7 @@ public class SubmissionService implements ApplicationRunner {
             form.setCreateTime(form.getModifyTime());
         } else {
             Submission db = this.submissionRepository.findSubmissionById(form.getId());
-            if (db == null || db.getDel()) {
+            if (db == null || db.isDel()) {
                 throw new SystemException(30000);
             }
             form.setAuditNo(db.getAuditNo());
@@ -118,6 +121,13 @@ public class SubmissionService implements ApplicationRunner {
             form.setCreateTime(db.getCreateTime());
         }
         this.submissionRepository.save(form);
+    }
+
+    /**
+     *
+     */
+    public void delete(Long id, User loginUser) {
+        this.submissionRepository.updateDel(id, true, loginUser.getId(), new Date());
     }
 
     /**
@@ -137,17 +147,18 @@ public class SubmissionService implements ApplicationRunner {
             String auditNo = this.generateAuditNo();
             this.submissionRepository.updateStatusAndAuditNo(comment.getTargetId(), 20, auditNo, loginUser.getId(), new Date());
         } else {
-            this.submissionRepository.updateStatus(comment.getTargetId(), comment.getType() == Comment.CommentType.ALLOW ? 20 : -10, loginUser.getId(), new Date());
+            this.submissionRepository.updateStatus(comment.getTargetId(), comment.getType() == Comment.CommentType.ALLOW ? 20 : -20, loginUser.getId(), new Date());
         }
     }
 
     /**
      *
      */
-    public void projectApproves(Long[] targetIds, int type, User loginUser) {
+    public void projectApproves(Long[] targetIds, int type,  String commentContent, User loginUser) {
         for (Long targetId : targetIds) {
             Comment comment = new Comment();
             comment.setTargetId(targetId);
+            comment.setContent(commentContent);
             comment.setType(Comment.CommentType.get(type));
             this.projectApprove(comment, loginUser);
         }
@@ -156,8 +167,68 @@ public class SubmissionService implements ApplicationRunner {
     /**
      *
      */
-    public void delete(Long id, User loginUser) {
-        this.submissionRepository.updateDel(id, true, loginUser.getId(), new Date());
+    public void distributionApprove(Comment comment, Long assignedId, User loginUser) {
+        Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
+        if (submission == null || submission.getStatus() != 20) {
+            throw new SystemException(30000);
+        }
+        comment.setTarget("submission");
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage("distribution");
+        this.commentRepository.save(comment);
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            User user = this.userService.getUserById(assignedId);
+            this.submissionRepository.updateStatusAndAssigned(comment.getTargetId(), 30, user, loginUser.getId(), new Date());
+        } else {
+            this.submissionRepository.updateStatus(comment.getTargetId(), -20, loginUser.getId(), new Date());
+        }
+    }
+
+    /**
+     *
+     */
+    public void distributionApproves(Long[] targetIds, int type, Long assignedId, String commentContent,  User loginUser) {
+        for (Long targetId : targetIds) {
+            Comment comment = new Comment();
+            comment.setTargetId(targetId);
+            comment.setContent(commentContent);
+            comment.setType(Comment.CommentType.get(type));
+            this.distributionApprove(comment, assignedId, loginUser);
+        }
+    }
+
+    /**
+     *
+     */
+    public void assignedApprove(Comment comment, User loginUser) {
+        Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
+        if (submission == null || submission.getStatus() != 30) {
+            throw new SystemException(30000);
+        }
+        comment.setTarget("submission");
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage("assigned");
+        this.commentRepository.save(comment);
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            this.submissionRepository.updateStatus(comment.getTargetId(), 40, loginUser.getId(), new Date());
+        } else {
+            this.submissionRepository.updateStatus(comment.getTargetId(), -20, loginUser.getId(), new Date());
+        }
+    }
+
+    /**
+     *
+     */
+    public void assignedApproves(Long[] targetIds, int type, String commentContent,  User loginUser) {
+        for (Long targetId : targetIds) {
+            Comment comment = new Comment();
+            comment.setTargetId(targetId);
+            comment.setContent(commentContent);
+            comment.setType(Comment.CommentType.get(type));
+            this.assignedApprove(comment, loginUser);
+        }
     }
 
     /**
@@ -190,6 +261,12 @@ public class SubmissionService implements ApplicationRunner {
      */
     @Autowired
     FileService fileService;
+
+    /**
+     *
+     */
+    @Autowired
+    UserService userService;
 
     /**
      *

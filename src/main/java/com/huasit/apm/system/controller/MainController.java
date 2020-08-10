@@ -53,7 +53,7 @@ public class MainController {
     @GetMapping("/logout/")
     public ResponseEntity<Map<String, Object>> logout(HttpServletRequest request, HttpServletResponse response) {
         this.userLoginService.removeCookie(request, response);
-        return new ResponseEntity<>(ImmutableMap.of("", ""), HttpStatus.OK);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
     /**

@@ -66,7 +66,7 @@ public class SubmissionController {
     }
 
     /**
-     *
+     * 审核人审核
      */
     @ResponseBody
     @PostMapping("/project/approve/")
@@ -77,13 +77,35 @@ public class SubmissionController {
     }
 
     /**
-     *
+     * 审核人批量审核
      */
     @ResponseBody
     @PostMapping("/project/approves/")
-    public ResponseEntity<Map<String, Object>> projectApproves(@RequestParam("targetIds") Long[] targetIds,@RequestParam("type") int type, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> projectApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String comment, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.projectApproves(targetIds, type, loginUser);
+        this.submissionService.projectApproves(targetIds, type, comment, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
+
+    /**
+     * 分配员批量选择分配人
+     */
+    @ResponseBody
+    @PostMapping("/distribution/approves/")
+    public ResponseEntity<Map<String, Object>> distributionApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, Long assignedId, String comment, HttpServletRequest request) {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.submissionService.distributionApproves(targetIds, type, assignedId, comment, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
+
+    /**
+     * 被分配人审核
+     */
+    @ResponseBody
+    @PostMapping("/assigned/approves/")
+    public ResponseEntity<Map<String, Object>> assignApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String comment, HttpServletRequest request) {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.submissionService.assignedApproves(targetIds, type, comment, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 

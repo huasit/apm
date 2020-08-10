@@ -26,23 +26,8 @@ public class CommentService {
         List<Comment> comments = this.getByTarget(target, targetId);
         if (comments != null) {
             for (Comment comment : comments) {
-                switch (comment.getType()) {
-                    case ALLOW:
-                        comment.setTypeStr(LocaleUtil.getMessage(request, "comment_type_allow"));
-                        break;
-                    case DISALLOW:
-                        comment.setTypeStr(LocaleUtil.getMessage(request, "comment_type_disallow"));
-                        break;
-                    default:
-                        comment.setTypeStr(LocaleUtil.getMessage(request, "comment_type_default"));
-                }
-                switch (comment.getStage()) {
-                    case "project":
-                        comment.setStageStr(LocaleUtil.getMessage(request, "comment_stage_project"));
-                        break;
-                    default:
-                        comment.setStageStr("");
-                }
+                comment.setTypeStr(LocaleUtil.getMessage(request, "comment_type_"+comment.getType().toString().toLowerCase()));
+                comment.setStageStr(LocaleUtil.getMessage(request, "stage_" + comment.getStage()));
             }
         }
         return comments;
