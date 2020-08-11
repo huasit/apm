@@ -208,12 +208,24 @@ public class Submission implements Serializable {
     @Column(nullable = false)
     private Date createTime;
 
+    private Date prepareViewDate;
+    private Date viewDate;
+    private String viewPeopleIds;
+    private String viewPeopleNames;
+    private BigDecimal submissionPrice;
+    private BigDecimal firstAuditPrice;
+    private BigDecimal secondAuditPrice;
+
     /**
      *
      */
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name="sid")
     private List<SubmissionDetail> details;
+    private List<SubmissionDetail> surveyFiles;
+    private List<SubmissionDetail> argueFiles;
+    private List<SubmissionDetail> auditFirstFiles;
+    private List<SubmissionDetail> auditSecondFiles;
 
     public Long getId() {
         return id;
