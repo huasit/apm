@@ -47,7 +47,12 @@ public class UserLoginService {
 		if (null != user) {
 			return user;
 		}
-		String token = WebUtil.getCookies(request, TOKEN_IN_COOKIE);
+		String token = request.getHeader("Authorization");
+		if(token != null && token.startsWith("Bearer ")) {
+			token = token.substring(7);
+		} else {
+			token = WebUtil.getCookies(request, TOKEN_IN_COOKIE);
+		}
 		if (token == null || "".equals(token)) {
 			return null;
 		}

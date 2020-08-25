@@ -45,10 +45,18 @@ public interface SubmissionRepository extends CrudRepository<Submission, Long>, 
     @Modifying
     @Query("update Submission set status=:status,auditNo=:auditNo,modifyId=:modifyId,modifyTime=:modifyTime where id=:id")
     void updateStatusAndAuditNo(@Param("id") Long id, @Param("status") int status, @Param("auditNo") String auditNo, @Param("modifyId") Long modifyId, @Param("modifyTime") Date modifyTime);
+
     /**
      *
      */
     @Modifying
-    @Query("update Submission set status=:status,assigned=:assigned,modifyId=:modifyId,modifyTime=:modifyTime where id=:id")
-    void updateStatusAndAssigned(@Param("id") Long id, @Param("status") int status, @Param("assigned") User assigned, @Param("modifyId") Long modifyId, @Param("modifyTime") Date modifyTime);
+    @Query("update Submission set status=:status,assigned=:assigned,auditType=:auditType,modifyId=:modifyId,modifyTime=:modifyTime where id=:id")
+    void updateStatusAndAssigned(@Param("id") Long id, @Param("status") int status, @Param("assigned") User assigned,@Param("auditType") String auditType,  @Param("modifyId") Long modifyId, @Param("modifyTime") Date modifyTime);
+
+    /**
+     *
+     */
+    @Modifying
+    @Query("update Submission set status=:status,prepareViewDate=:prepareViewDate,viewDate=:viewDate,viewPeopleIds=:viewPeopleIds,modifyId=:modifyId,modifyTime=:modifyTime where id=:id")
+    void updateWhileSurveyPrepare(@Param("id") Long id, @Param("status") int status, @Param("prepareViewDate") Date prepareViewDate, @Param("viewDate") Date viewDate, @Param("viewPeopleIds") String viewPeopleIds, @Param("modifyId") Long modifyId, @Param("modifyTime") Date modifyTime);
 }

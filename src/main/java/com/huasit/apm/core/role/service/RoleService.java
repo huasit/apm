@@ -1,9 +1,10 @@
-package com.huasit.apm.core.user.service;
+package com.huasit.apm.core.role.service;
 
+import com.huasit.apm.core.role.entity.Role;
+import com.huasit.apm.core.role.entity.RoleRepository;
+import com.huasit.apm.core.role.entity.RoleUser;
 import com.huasit.apm.core.user.entity.User;
 import com.huasit.apm.core.user.entity.UserRepository;
-import com.huasit.apm.core.user.entity.UserToken;
-import com.huasit.apm.core.user.entity.UserTokenRepository;
 import com.huasit.apm.system.exception.SystemException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,33 +21,35 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
-/**
- *
- */
 @Service
 @Transactional
-public class UserService {
+public class RoleService {
 
     /**
      *
      */
-    public User getUserById(Long id) {
-        return this.userRepository.findUserById(id);
+    public boolean checkUserHasRole(Long userId, String roleKey) {
+        return this.roleRepository.checkUserHasRole(userId, roleKey) != null;
     }
 
     /**
      *
      */
-    public Page<User> list(User form, int page, int pageSize, User loginUser) {
+    public Role getRoleById(Long id) {
+        return this.roleRepository.findRoleById(id);
+    }
+
+    /**
+     *
+     */
+    public Page<Role> list(Role form, int page, int pageSize, User loginUser) {
         PageRequest pageRequest = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Order.desc("id")));
-        return this.userRepository.findAll(new Specification<User>() {
+        return this.roleRepository.findAll(new Specification<Role>() {
             @Override
-            public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+            public Predicate toPredicate(Root<Role> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
                 List<Predicate> predicates = new ArrayList<>();
                 predicates.add(cb.equal(root.get("del").as(boolean.class), false));
-                predicates.add(cb.equal(root.get("thirdParty").as(boolean.class), form.isThirdParty()));
                 if (form.getName() != null && !"".equals(form.getName())) {
                     predicates.add(cb.like(root.get("name").as(String.class), "%"+  form.getName().trim() + "%"));
                 }
@@ -58,76 +61,46 @@ public class UserService {
             }
         }, pageRequest);
     }
-
     /**
      *
      */
-    public void save(User form, User loginUser) {
+    public void save(Role form, User loginUser) {
         form.setModifyId(loginUser.getId());
         form.setModifyTime(new Date());
         if (form.getId() == null) {
-            form.setThirdParty(true);
             form.setCreatorId(form.getModifyId());
             form.setCreateTime(form.getModifyTime());
         } else {
-            User db = this.userRepository.findUserById(form.getId());
+            Role db = this.roleRepository.findRoleById(form.getId());
             if (db == null || db.isDel()) {
                 throw new SystemException(30000);
             }
+            form.setRkey(db.getRkey());
+            form.setName(db.getName());
             form.setCreatorId(db.getCreatorId());
             form.setCreateTime(db.getCreateTime());
         }
-        User check = this.userRepository.findByUsername(form.getUsername());
-        if(check != null && !check.getId().equals(form.getId())) {
-            throw new SystemException(20100);
+        if(form.getUsers() != null) {
+            for(RoleUser u : form.getUsers()) {
+                if(u.getUser() == null || u.getUser().getId() == null) {
+                    continue;
+                }
+                User user = this.userRepository.findUserById(u.getUser().getId());
+                u.setUser(user);
+            }
         }
-        this.userRepository.save(form);
+        this.roleRepository.save(form);
     }
 
     /**
      *
      */
-    public void delete(Long id, User loginUser) {
-        this.userRepository.updateDel(id, true, loginUser.getId(), new Date());
-    }
-
-    /**
-     *
-     */
-    public User getLoginUserByUsernameAndPassword(String username, String password) {
-        return this.userRepository.findLoginUserByUsernameAndPassword(username, password);
-    }
-
-    /**
-     *
-     */
-    public User getLoginUserByToken(String token) {
-        return this.userRepository.findLoginUserByToken(token);
-    }
-
-    /**
-     *
-     */
-    public UserToken createUserToken(User user, String ip) {
-        UserToken userToken = new UserToken();
-        userToken.setCreateTime(new Date());
-        userToken.setEnable(true);
-        userToken.setToken(UUID.randomUUID().toString());
-        userToken.setUserId(user.getId());
-        userToken.setLoginIp(ip);
-        this.userTokenRepository.save(userToken);
-        return userToken;
-    }
+    @Autowired
+    RoleRepository roleRepository;
 
     /**
      *
      */
     @Autowired
     UserRepository userRepository;
-
-    /**
-     *
-     */
-    @Autowired
-    UserTokenRepository userTokenRepository;
 }

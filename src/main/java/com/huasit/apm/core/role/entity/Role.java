@@ -1,17 +1,12 @@
-package com.huasit.apm.business.material.entity;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
+package com.huasit.apm.core.role.entity;
 
 import javax.persistence.*;
-import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
-/**
- *
- */
 @Entity
-@Table(name = "MATERIAL")
-public class Material implements Serializable {
+@Table(name = "ROLE")
+public class Role {
 
     /**
      *
@@ -23,9 +18,14 @@ public class Material implements Serializable {
     /**
      *
      */
-    @JsonIgnore
     @Column(nullable = false)
     private boolean del;
+
+    /**
+     *
+     */
+    @Column(nullable = false)
+    private String rkey;
 
     /**
      *
@@ -36,33 +36,33 @@ public class Material implements Serializable {
     /**
      *
      */
-    @Column(nullable = false)
-    private boolean required;
-
-    /**
-     *
-     */
-    @Column(nullable = false)
+    @Column
     private Long modifyId;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private Date modifyTime;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private Long creatorId;
 
     /**
      *
      */
-
-    @Column(nullable = false)
+    @Column
     private Date createTime;
+
+    /**
+     *
+     */
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name="rid")
+    private List<RoleUser> users;
 
     public Long getId() {
         return id;
@@ -72,12 +72,20 @@ public class Material implements Serializable {
         this.id = id;
     }
 
-    public boolean getDel() {
+    public boolean isDel() {
         return del;
     }
 
     public void setDel(boolean del) {
         this.del = del;
+    }
+
+    public String getRkey() {
+        return rkey;
+    }
+
+    public void setRkey(String rkey) {
+        this.rkey = rkey;
     }
 
     public String getName() {
@@ -86,14 +94,6 @@ public class Material implements Serializable {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public boolean isRequired() {
-        return required;
-    }
-
-    public void setRequired(boolean required) {
-        this.required = required;
     }
 
     public Long getModifyId() {
@@ -126,5 +126,13 @@ public class Material implements Serializable {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
+    }
+
+    public List<RoleUser> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<RoleUser> users) {
+        this.users = users;
     }
 }

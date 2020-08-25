@@ -1,4 +1,4 @@
-package com.huasit.apm.business.material.entity;
+package com.huasit.apm.business.construction.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -10,8 +10,8 @@ import java.util.Date;
  *
  */
 @Entity
-@Table(name = "MATERIAL")
-public class Material implements Serializable {
+@Table(name = "Construction")
+public class Construction implements Serializable {
 
     /**
      *
@@ -37,7 +37,13 @@ public class Material implements Serializable {
      *
      */
     @Column(nullable = false)
-    private boolean required;
+    private String contact;
+
+    /**
+     *
+     */
+    @Column(nullable = false)
+    private String telphone;
 
     /**
      *
@@ -48,6 +54,7 @@ public class Material implements Serializable {
     /**
      *
      */
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false)
     private Date modifyTime;
 
@@ -60,7 +67,7 @@ public class Material implements Serializable {
     /**
      *
      */
-
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false)
     private Date createTime;
 
@@ -88,12 +95,20 @@ public class Material implements Serializable {
         this.name = name;
     }
 
-    public boolean isRequired() {
-        return required;
+    public String getContact() {
+        return contact;
     }
 
-    public void setRequired(boolean required) {
-        this.required = required;
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+
+    public String getTelphone() {
+        return telphone;
+    }
+
+    public void setTelphone(String telphone) {
+        this.telphone = telphone;
     }
 
     public Long getModifyId() {

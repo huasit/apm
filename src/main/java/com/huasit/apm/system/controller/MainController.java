@@ -42,7 +42,6 @@ public class MainController {
         if (user == null) {
             return new ResponseEntity<>(LocaleUtil.getErrorResponseEntity(request,20000), HttpStatus.BAD_REQUEST);
         }
-        this.userLoginService.setCookie(user, request, response);
         return new ResponseEntity<>(ImmutableMap.of("id", user.getId(), "name", user.getName(), "token", user.getToken().getToken()), HttpStatus.OK);
     }
 
@@ -52,7 +51,6 @@ public class MainController {
     @ResponseBody
     @GetMapping("/logout/")
     public ResponseEntity<Map<String, Object>> logout(HttpServletRequest request, HttpServletResponse response) {
-        this.userLoginService.removeCookie(request, response);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 

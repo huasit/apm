@@ -14,13 +14,15 @@ public class Comment {
      *
      */
     public enum CommentType {
-        DISALLOW, ALLOW;
+        DISALLOW, ALLOW, DEFAULT;
         public static CommentType get(int v) {
             switch(v) {
                 case 0:
                     return DISALLOW;
                 case 1:
                     return ALLOW;
+                case 2:
+                    return DEFAULT;
                 default:
                     return null;
             }

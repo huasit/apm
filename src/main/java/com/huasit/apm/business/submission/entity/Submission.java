@@ -1,8 +1,10 @@
 package com.huasit.apm.business.submission.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.huasit.apm.core.user.entity.User;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -53,6 +55,11 @@ public class Submission implements Serializable {
     /**
      *
      */
+    private String auditType;
+
+    /**
+     *
+     */
     private String auditNo;
 
     /**
@@ -79,19 +86,20 @@ public class Submission implements Serializable {
      *
      */
     @Column
-    private String constructionUnit;
+    private Long constructionUnit;
     /**
      *
      */
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     @Column
     private Date startDate;
     /**
      *
      */
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     @Column
     private Date endDate;
+
     /**
      *
      */
@@ -174,6 +182,18 @@ public class Submission implements Serializable {
      *
      */
     @Column
+    private String payType;
+
+    /**
+     *
+     */
+    @Column
+    private String payCondition;
+
+    /**
+     *
+     */
+    @Column
     private String description;
 
     /**
@@ -181,6 +201,76 @@ public class Submission implements Serializable {
      */
     @Column
     private Integer materialGroup;
+
+    /**
+     *
+     */
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date viewDate;
+
+    /**
+     *
+     */
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date prepareViewDate;
+
+    /**
+     *
+     */
+    @Column(nullable = false)
+    private String viewPeopleIds;
+
+    /**
+     *
+     */
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date viewDate2;
+
+    /**
+     *
+     */
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date prepareViewDate2;
+
+    /**
+     *
+     */
+    @Column(nullable = false)
+    private String viewPeopleIds2;
+
+    /**
+     *
+     */
+    @Column
+    private BigDecimal submissionPrice;
+
+    /**
+     *
+     */
+    @Column
+    private BigDecimal firstAuditPrice;
+
+    /**
+     *
+     */
+    @Column
+    private BigDecimal secondAuditPrice;
+
+    /**
+     *
+     */
+    @Column
+    private BigDecimal subtractPrice;
+
+    /**
+     *
+     */
+    @Column
+    private BigDecimal auditFee;
 
     /**
      *
@@ -208,24 +298,53 @@ public class Submission implements Serializable {
     @Column(nullable = false)
     private Date createTime;
 
-    private Date prepareViewDate;
-    private Date viewDate;
-    private String viewPeopleIds;
-    private String viewPeopleNames;
-    private BigDecimal submissionPrice;
-    private BigDecimal firstAuditPrice;
-    private BigDecimal secondAuditPrice;
+    /**
+     *
+     */
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @Fetch(FetchMode.SUBSELECT)
+    @JoinColumn(name="sid")
+    private List<SubmissionDetail> details;
 
     /**
      *
      */
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @Fetch(FetchMode.SUBSELECT)
     @JoinColumn(name="sid")
-    private List<SubmissionDetail> details;
-    private List<SubmissionDetail> surveyFiles;
-    private List<SubmissionDetail> argueFiles;
-    private List<SubmissionDetail> auditFirstFiles;
-    private List<SubmissionDetail> auditSecondFiles;
+    private List<SubmissionSurveyFile> surveyFiles;
+
+    /**
+     *
+     */
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @Fetch(FetchMode.SUBSELECT)
+    @JoinColumn(name="sid")
+    private List<SubmissionArgueFile> argueFiles;
+
+    /**
+     *
+     */
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @Fetch(FetchMode.SUBSELECT)
+    @JoinColumn(name="sid")
+    private List<SubmissionSupplementFile> supplementFiles;
+
+    /**
+     *
+     */
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @Fetch(FetchMode.SUBSELECT)
+    @JoinColumn(name="sid")
+    private List<SubmissionAuditFirst> auditFirstFiles;
+
+    /**
+     *
+     */
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @Fetch(FetchMode.SUBSELECT)
+    @JoinColumn(name="sid")
+    private List<SubmissionAuditSecond> auditSecondFiles;
 
     public Long getId() {
         return id;
@@ -241,6 +360,22 @@ public class Submission implements Serializable {
 
     public void setDel(boolean del) {
         this.del = del;
+    }
+
+    public String getPayType() {
+        return payType;
+    }
+
+    public void setPayType(String payType) {
+        this.payType = payType;
+    }
+
+    public String getPayCondition() {
+        return payCondition;
+    }
+
+    public void setPayCondition(String payCondition) {
+        this.payCondition = payCondition;
     }
 
     public int getStatus() {
@@ -307,11 +442,11 @@ public class Submission implements Serializable {
         this.budget = budget;
     }
 
-    public String getConstructionUnit() {
+    public Long getConstructionUnit() {
         return constructionUnit;
     }
 
-    public void setConstructionUnit(String constructionUnit) {
+    public void setConstructionUnit(Long constructionUnit) {
         this.constructionUnit = constructionUnit;
     }
 
@@ -489,5 +624,141 @@ public class Submission implements Serializable {
 
     public void setDetails(List<SubmissionDetail> details) {
         this.details = details;
+    }
+
+    public Date getViewDate() {
+        return viewDate;
+    }
+
+    public void setViewDate(Date viewDate) {
+        this.viewDate = viewDate;
+    }
+
+    public Date getPrepareViewDate() {
+        return prepareViewDate;
+    }
+
+    public void setPrepareViewDate(Date prepareViewDate) {
+        this.prepareViewDate = prepareViewDate;
+    }
+
+    public String getViewPeopleIds() {
+        return viewPeopleIds;
+    }
+
+    public void setViewPeopleIds(String viewPeopleIds) {
+        this.viewPeopleIds = viewPeopleIds;
+    }
+
+    public BigDecimal getSubmissionPrice() {
+        return submissionPrice;
+    }
+
+    public void setSubmissionPrice(BigDecimal submissionPrice) {
+        this.submissionPrice = submissionPrice;
+    }
+
+    public BigDecimal getFirstAuditPrice() {
+        return firstAuditPrice;
+    }
+
+    public void setFirstAuditPrice(BigDecimal firstAuditPrice) {
+        this.firstAuditPrice = firstAuditPrice;
+    }
+
+    public BigDecimal getSecondAuditPrice() {
+        return secondAuditPrice;
+    }
+
+    public void setSecondAuditPrice(BigDecimal secondAuditPrice) {
+        this.secondAuditPrice = secondAuditPrice;
+    }
+
+    public List<SubmissionSurveyFile> getSurveyFiles() {
+        return surveyFiles;
+    }
+
+    public void setSurveyFiles(List<SubmissionSurveyFile> surveyFiles) {
+        this.surveyFiles = surveyFiles;
+    }
+
+    public List<SubmissionArgueFile> getArgueFiles() {
+        return argueFiles;
+    }
+
+    public void setArgueFiles(List<SubmissionArgueFile> argueFiles) {
+        this.argueFiles = argueFiles;
+    }
+
+    public List<SubmissionAuditFirst> getAuditFirstFiles() {
+        return auditFirstFiles;
+    }
+
+    public void setAuditFirstFiles(List<SubmissionAuditFirst> auditFirstFiles) {
+        this.auditFirstFiles = auditFirstFiles;
+    }
+
+    public List<SubmissionAuditSecond> getAuditSecondFiles() {
+        return auditSecondFiles;
+    }
+
+    public void setAuditSecondFiles(List<SubmissionAuditSecond> auditSecondFiles) {
+        this.auditSecondFiles = auditSecondFiles;
+    }
+
+    public BigDecimal getSubtractPrice() {
+        return subtractPrice;
+    }
+
+    public void setSubtractPrice(BigDecimal subtractPrice) {
+        this.subtractPrice = subtractPrice;
+    }
+
+    public BigDecimal getAuditFee() {
+        return auditFee;
+    }
+
+    public void setAuditFee(BigDecimal auditFee) {
+        this.auditFee = auditFee;
+    }
+
+    public List<SubmissionSupplementFile> getSupplementFiles() {
+        return supplementFiles;
+    }
+
+    public void setSupplementFiles(List<SubmissionSupplementFile> supplementFiles) {
+        this.supplementFiles = supplementFiles;
+    }
+
+    public Date getViewDate2() {
+        return viewDate2;
+    }
+
+    public void setViewDate2(Date viewDate2) {
+        this.viewDate2 = viewDate2;
+    }
+
+    public Date getPrepareViewDate2() {
+        return prepareViewDate2;
+    }
+
+    public void setPrepareViewDate2(Date prepareViewDate2) {
+        this.prepareViewDate2 = prepareViewDate2;
+    }
+
+    public String getViewPeopleIds2() {
+        return viewPeopleIds2;
+    }
+
+    public void setViewPeopleIds2(String viewPeopleIds2) {
+        this.viewPeopleIds2 = viewPeopleIds2;
+    }
+
+    public String getAuditType() {
+        return auditType;
+    }
+
+    public void setAuditType(String auditType) {
+        this.auditType = auditType;
     }
 }

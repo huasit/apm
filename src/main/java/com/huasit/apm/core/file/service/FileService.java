@@ -36,7 +36,7 @@ public class FileService {
         List<File> files = this.fileRepository.findByIds(ids);
         if(files != null) {
             for(File file : files) {
-                file.setUrl("http://192.168.1.100/file/download/?id=" + file.getId());
+                file.setUrl("/file/download/?id=" + file.getId());
             }
         }
         return files;
