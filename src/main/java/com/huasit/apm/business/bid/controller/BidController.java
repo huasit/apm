@@ -1,9 +1,10 @@
-package com.huasit.apm.business.submission.controller;
+package com.huasit.apm.business.bid.controller;
 
 import com.google.common.collect.ImmutableMap;
-import com.huasit.apm.business.submission.entity.Submission;
-import com.huasit.apm.business.submission.form.*;
-import com.huasit.apm.business.submission.service.SubmissionService;
+import com.huasit.apm.business.bid.entity.Bid;
+import com.huasit.apm.business.bid.form.BidAuditFirstForm;
+import com.huasit.apm.business.bid.form.BidAuditSecondForm;
+import com.huasit.apm.business.bid.service.BidService;
 import com.huasit.apm.core.comment.entity.Comment;
 import com.huasit.apm.core.user.entity.User;
 import com.huasit.apm.core.user.service.UserLoginService;
@@ -19,8 +20,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 @Controller
-@RequestMapping("/submission")
-public class SubmissionController {
+@RequestMapping("/bid")
+public class BidController {
 
     /**
      *
@@ -29,8 +30,8 @@ public class SubmissionController {
     @GetMapping("/get/")
     public ResponseEntity<Map<String, Object>> get(@RequestParam("id") Long id, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        Submission submission = this.submissionService.getById(id, loginUser);
-        return new ResponseEntity<>(ImmutableMap.of("submission", submission), HttpStatus.OK);
+        Bid bid = this.bidService.getById(id, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("bid", bid), HttpStatus.OK);
     }
 
     /**
@@ -38,9 +39,9 @@ public class SubmissionController {
      */
     @ResponseBody
     @GetMapping("/list/")
-    public ResponseEntity<Map<String, Object>> list(Submission form, Long assignedId, @RequestParam("page") int page, @RequestParam(name = "pageSize", defaultValue = "10") int pageSize, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> list(Bid form, Long assignedId, @RequestParam("page") int page, @RequestParam(name = "pageSize", defaultValue = "10") int pageSize, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        Page<Submission> list = this.submissionService.list(form, assignedId, page, pageSize, loginUser);
+        Page<Bid> list = this.bidService.list(form, assignedId, page, pageSize, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("list", list), HttpStatus.OK);
     }
 
@@ -49,9 +50,9 @@ public class SubmissionController {
      */
     @ResponseBody
     @PostMapping("/addOrUpdate/")
-    public ResponseEntity<Map<String, Object>> addOrUpdate(@RequestBody Submission form, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> addOrUpdate(@RequestBody Bid form, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.save(form, loginUser);
+        this.bidService.save(form, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("id", form.getId()), HttpStatus.OK);
     }
 
@@ -62,7 +63,7 @@ public class SubmissionController {
     @RequestMapping("/delete/")
     public ResponseEntity<Map<String, Object>> delete(@RequestParam("id") Long id, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.delete(id, loginUser);
+        this.bidService.delete(id, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("id", id), HttpStatus.OK);
     }
 
@@ -73,7 +74,7 @@ public class SubmissionController {
     @PostMapping("/project/approve/")
     public ResponseEntity<Map<String, Object>> projectApprove(@RequestBody Comment comment, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.projectApprove(comment, loginUser);
+        this.bidService.projectApprove(comment, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -84,7 +85,7 @@ public class SubmissionController {
     @PostMapping("/project/approves/")
     public ResponseEntity<Map<String, Object>> projectApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String comment, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.projectApproves(targetIds, type, comment, loginUser);
+        this.bidService.projectApproves(targetIds, type, comment, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -95,7 +96,7 @@ public class SubmissionController {
     @PostMapping("/distribution/approves/")
     public ResponseEntity<Map<String, Object>> distributionApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String auditType, Long assignedId, Long assignedLinkId, String comment, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.distributionApproves(targetIds, type, auditType, assignedId, assignedLinkId, comment, loginUser);
+        this.bidService.distributionApproves(targetIds, type, auditType, assignedId, assignedLinkId, comment, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -106,55 +107,7 @@ public class SubmissionController {
     @PostMapping("/check/approves/")
     public ResponseEntity<Map<String, Object>> checkApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String comment, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.checkApproves(targetIds, type, comment, loginUser);
-        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
-    }
-
-    /**
-     * 勘察准备审批
-     */
-    @ResponseBody
-    @PostMapping("/survey/prepare/approve/")
-    public ResponseEntity<Map<String, Object>> surveyPrepareApprove(@RequestParam("targetId") Long targetId, @RequestParam("type") int type, String comment, String prepareViewDate, HttpServletRequest request) throws Exception {
-        User loginUser = this.userLoginService.getLoginUser(request);
-        Comment c = new Comment();
-        c.setTargetId(targetId);
-        c.setContent(comment);
-        c.setType(Comment.CommentType.get(type));
-        this.submissionService.surveyPrepareApprove(c, prepareViewDate, loginUser);
-        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
-    }
-
-    /**
-     * 勘察现场审批
-     */
-    @ResponseBody
-    @PostMapping("/survey/scene/approve/")
-    public ResponseEntity<Map<String, Object>> surveySceneApprove(@RequestBody SurveySceneForm form, HttpServletRequest request) throws Exception {
-        User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.surveySceneApprove(form, loginUser);
-        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
-    }
-
-    /**
-     * 争议处理审批
-     */
-    @ResponseBody
-    @PostMapping("/argue/approve/")
-    public ResponseEntity<Map<String, Object>> argueApprove(@RequestBody ArgueForm form, HttpServletRequest request) throws Exception {
-        User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.argueApprove(form, loginUser);
-        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
-    }
-
-    /**
-     * 争议处理中审批
-     */
-    @ResponseBody
-    @PostMapping("/argue/reject/approve/")
-    public ResponseEntity<Map<String, Object>> argueRejectApprove(@RequestBody ArgueRejectForm form, HttpServletRequest request) throws Exception {
-        User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.argueRejectApprove(form, loginUser);
+        this.bidService.checkApproves(targetIds, type, comment, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -163,9 +116,9 @@ public class SubmissionController {
      */
     @ResponseBody
     @PostMapping("/audit/first/approve/")
-    public ResponseEntity<Map<String, Object>> auditFirstApprove(@RequestBody AuditFirstForm form, HttpServletRequest request) throws Exception {
+    public ResponseEntity<Map<String, Object>> auditFirstApprove(@RequestBody BidAuditFirstForm form, HttpServletRequest request) throws Exception {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.auditFirstApprove(form, loginUser);
+        this.bidService.auditFirstApprove(form, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -174,9 +127,9 @@ public class SubmissionController {
      */
     @ResponseBody
     @PostMapping("/audit/second/approve/")
-    public ResponseEntity<Map<String, Object>> auditFirstApprove(@RequestBody AuditSecondForm form, HttpServletRequest request) throws Exception {
+    public ResponseEntity<Map<String, Object>> auditFirstApprove(@RequestBody BidAuditSecondForm form, HttpServletRequest request) throws Exception {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.auditSecondApprove(form, loginUser);
+        this.bidService.auditSecondApprove(form, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -187,7 +140,7 @@ public class SubmissionController {
     @PostMapping("/complete/approves/")
     public ResponseEntity<Map<String, Object>> completeApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String comment, HttpServletRequest request) throws Exception {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.completeApproves(targetIds, type, comment, loginUser);
+        this.bidService.completeApproves(targetIds, type, comment, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -198,9 +151,15 @@ public class SubmissionController {
     @PostMapping("/filed/approves/")
     public ResponseEntity<Map<String, Object>> filedApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String comment, HttpServletRequest request) throws Exception {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.submissionService.filedApproves(targetIds, type, comment, loginUser);
+        this.bidService.filedApproves(targetIds, type, comment, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
+
+    /**
+     *
+     */
+    @Autowired
+    BidService bidService;
 
     /**
      *
@@ -213,10 +172,4 @@ public class SubmissionController {
      */
     @Autowired
     UserLoginService userLoginService;
-
-    /**
-     *
-     */
-    @Autowired
-    SubmissionService submissionService;
 }

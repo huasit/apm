@@ -1,13 +1,13 @@
-package com.huasit.apm.business.submission.form;
+package com.huasit.apm.business.bid.form;
 
-import com.huasit.apm.business.submission.entity.SubmissionAuditSecond;
+import com.huasit.apm.business.bid.entity.BidAuditSecond;
 import com.huasit.apm.core.comment.entity.Comment;
 
 import javax.persistence.Column;
 import java.math.BigDecimal;
 import java.util.List;
 
-public class AuditSecondForm {
+public class BidAuditSecondForm {
 
     /**
      *
@@ -33,7 +33,7 @@ public class AuditSecondForm {
     /**
      *
      */
-    private List<SubmissionAuditSecond> auditSecondFiles;
+    private List<BidAuditSecond> auditSecondFiles;
 
     private String auditNote;
     private String  auditSecondSub;
@@ -71,11 +71,11 @@ public class AuditSecondForm {
         this.secondAuditPrice = secondAuditPrice;
     }
 
-    public List<SubmissionAuditSecond> getAuditSecondFiles() {
+    public List<BidAuditSecond> getAuditSecondFiles() {
         return auditSecondFiles;
     }
 
-    public void setAuditSecondFiles(List<SubmissionAuditSecond> auditSecondFiles) {
+    public void setAuditSecondFiles(List<BidAuditSecond> auditSecondFiles) {
         this.auditSecondFiles = auditSecondFiles;
     }
 

@@ -5,6 +5,7 @@ import com.huasit.apm.core.role.entity.Role;
 import com.huasit.apm.core.role.service.RoleService;
 import com.huasit.apm.core.user.entity.User;
 import com.huasit.apm.core.user.service.UserLoginService;
+import com.huasit.apm.system.exception.SystemException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -47,8 +48,25 @@ public class RoleController {
     @RequestMapping("/addOrUpdate/")
     public ResponseEntity<Map<String, Object>> addOrUpdate(@RequestBody Role form, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
+        if(!loginUser.isAdmin()) {
+            throw new SystemException(10002);
+        }
         this.roleService.save(form, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("role", form), HttpStatus.OK);
+    }
+
+    /**
+     *
+     */
+    @ResponseBody
+    @RequestMapping("/delete/")
+    public ResponseEntity<Map<String, Object>> delete(@RequestParam("id") Long id, HttpServletRequest request) {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        if(!loginUser.isAdmin()) {
+            throw new SystemException(10002);
+        }
+        this.roleService.delete(id, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
     /**

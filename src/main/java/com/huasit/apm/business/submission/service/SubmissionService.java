@@ -8,12 +8,12 @@ import com.huasit.apm.core.file.entity.File;
 import com.huasit.apm.core.file.service.FileService;
 import com.huasit.apm.core.role.service.RoleService;
 import com.huasit.apm.core.user.entity.User;
+import com.huasit.apm.core.user.entity.UserLink;
 import com.huasit.apm.core.user.service.UserService;
 import com.huasit.apm.system.exception.SystemException;
 import com.huasit.apm.system.util.DataUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -35,7 +35,7 @@ import java.util.List;
 
 @Service
 @Transactional
-public class SubmissionService implements ApplicationRunner {
+public class SubmissionService {
 
     // Status
     // -20 被退回
@@ -48,7 +48,7 @@ public class SubmissionService implements ApplicationRunner {
     // 60 待争议处理/已勘察现场
     // 70 待审计初审/已争议处理
     // 80 待审计复审/已审计初审
-    // 90 待/已审计复审
+    // 90 待完成/已审计复审
 
     /**
      *
@@ -189,20 +189,20 @@ public class SubmissionService implements ApplicationRunner {
     /**
      *
      */
-    public Page<Submission> list(Submission form,Long assignedId, int page, int pageSize, User loginUser) {
+    public Page<Submission> list(Submission form, Long assignedId, int page, int pageSize, User loginUser) {
         boolean viewAll = this.roleService.checkUserHasRole(loginUser.getId(), "submission_list_all_view");
         PageRequest pageRequest = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Order.desc("id")));
         return this.submissionRepository.findAll(new Specification<Submission>() {
             @Override
             public Predicate toPredicate(Root<Submission> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
                 List<Predicate> predicates = new ArrayList<>();
-                if(!DataUtil.stringIsEmpty(form.getItemCode())) {
+                if (!DataUtil.stringIsEmpty(form.getItemCode())) {
                     predicates.add(cb.like(root.get("itemCode").as(String.class), "%" + form.getItemCode().trim() + "%"));
                 }
-                if(!DataUtil.stringIsEmpty(form.getAuditNo())) {
+                if (!DataUtil.stringIsEmpty(form.getAuditNo())) {
                     predicates.add(cb.like(root.get("auditNo").as(String.class), "%" + form.getAuditNo().trim() + "%"));
                 }
-                if(!DataUtil.stringIsEmpty(form.getContractNo())) {
+                if (!DataUtil.stringIsEmpty(form.getContractNo())) {
                     predicates.add(cb.like(root.get("contractNo").as(String.class), "%" + form.getContractNo().trim() + "%"));
                 }
                 if (!DataUtil.stringIsEmpty(form.getProjectName())) {
@@ -211,20 +211,21 @@ public class SubmissionService implements ApplicationRunner {
                 if (form.getConstructionUnit() != null) {
                     predicates.add(cb.equal(root.get("constructionUnit").as(Long.class), form.getConstructionUnit()));
                 }
-                if(form.getContractMoney() != null) {
+                if (form.getContractMoney() != null) {
                     predicates.add(cb.equal(root.get("contractMoney").as(BigDecimal.class), form.getContractMoney()));
                 }
                 if (!DataUtil.stringIsEmpty(form.getAuditType())) {
                     predicates.add(cb.equal(root.get("auditType").as(String.class), form.getAuditType().trim()));
                 }
-                if(assignedId != null) {
-                    predicates.add(cb.equal(root.get("assigned.id").as(Long.class), assignedId));
+                if (assignedId != null) {
+                    User u = new User();
+                    u.setId(assignedId);
+                    predicates.add(cb.equal(root.get("assigned").as(User.class), u));
                 }
-
                 if (form.getStatus() != 0) {
                     predicates.add(cb.equal(root.get("status").as(int.class), form.getStatus()));
                 }
-                if(!viewAll) {
+                if (!viewAll) {
                     predicates.add(cb.equal(root.get("creatorId").as(Long.class), loginUser.getId()));
                 }
                 predicates.add(cb.equal(root.get("del").as(boolean.class), false));
@@ -246,6 +247,7 @@ public class SubmissionService implements ApplicationRunner {
             throw new SystemException(30000);
         }
         form.setAssigned(null);
+        form.setAssignedLink(null);
         form.setModifyId(loginUser.getId());
         form.setModifyTime(new Date());
         if (form.getId() == null) {
@@ -285,17 +287,17 @@ public class SubmissionService implements ApplicationRunner {
         comment.setStage("project");
         this.commentRepository.save(comment);
         if (comment.getType() == Comment.CommentType.ALLOW && submission.getAuditNo() == null) {
-            String auditNo = this.generateAuditNo();
-            this.submissionRepository.updateStatusAndAuditNo(comment.getTargetId(), 20, auditNo, loginUser.getId(), new Date());
+            this.submissionRepository.updateStatusAndAuditNo(comment.getTargetId(), 20, comment.getAuditNo(), loginUser.getId(), new Date());
         } else {
-            this.submissionRepository.updateStatus(comment.getTargetId(), comment.getType() == Comment.CommentType.ALLOW ? 20 : -20, loginUser.getId(), new Date());
+            this.submissionRepository.updateStatusAndAuditNo(comment.getTargetId(), comment.getType() == Comment.CommentType.ALLOW ? 20 : -20, comment.getAuditNo(), loginUser.getId(), new Date());
+            //this.submissionRepository.updateStatus(comment.getTargetId(), comment.getType() == Comment.CommentType.ALLOW ? 20 : -20, loginUser.getId(), new Date());
         }
     }
 
     /**
      *
      */
-    public void projectApproves(Long[] targetIds, int type,  String commentContent, User loginUser) {
+    public void projectApproves(Long[] targetIds, int type, String commentContent, User loginUser) {
         for (Long targetId : targetIds) {
             Comment comment = new Comment();
             comment.setTargetId(targetId);
@@ -308,7 +310,7 @@ public class SubmissionService implements ApplicationRunner {
     /**
      *
      */
-    public void distributionApprove(Comment comment,  String auditType, Long assignedId, User loginUser) {
+    public void distributionApprove(Comment comment, String auditType, Long assignedId, Long assignedLinkId, User loginUser) {
         Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
         if (submission == null || submission.getStatus() != 20) {
             throw new SystemException(30000);
@@ -319,8 +321,12 @@ public class SubmissionService implements ApplicationRunner {
         comment.setStage("distribution");
         this.commentRepository.save(comment);
         if (comment.getType() == Comment.CommentType.ALLOW) {
-            User user = this.userService.getUserById(assignedId);
-            this.submissionRepository.updateStatusAndAssigned(comment.getTargetId(), 30, user,auditType, loginUser.getId(), new Date());
+            User assigned = this.userService.getUserById(assignedId);
+            UserLink assignedLink = null;
+            if(assignedLinkId != null) {
+                assignedLink = this.userService.getUserLinkById(assignedLinkId);
+            }
+            this.submissionRepository.updateStatusAndAssigned(comment.getTargetId(), 30, assigned,assignedLink, auditType, loginUser.getId(), new Date());
         } else {
             this.submissionRepository.updateStatus(comment.getTargetId(), -20, loginUser.getId(), new Date());
         }
@@ -329,13 +335,13 @@ public class SubmissionService implements ApplicationRunner {
     /**
      *
      */
-    public void distributionApproves(Long[] targetIds, int type,  String auditType,Long assignedId, String commentContent,  User loginUser) {
+    public void distributionApproves(Long[] targetIds, int type, String auditType, Long assignedId, Long assignedLinkId, String commentContent, User loginUser) {
         for (Long targetId : targetIds) {
             Comment comment = new Comment();
             comment.setTargetId(targetId);
             comment.setContent(commentContent);
             comment.setType(Comment.CommentType.get(type));
-            this.distributionApprove(comment, auditType, assignedId, loginUser);
+            this.distributionApprove(comment, auditType, assignedId,assignedLinkId, loginUser);
         }
     }
 
@@ -362,7 +368,7 @@ public class SubmissionService implements ApplicationRunner {
     /**
      *
      */
-    public void checkApproves(Long[] targetIds, int type, String commentContent,  User loginUser) {
+    public void checkApproves(Long[] targetIds, int type, String commentContent, User loginUser) {
         for (Long targetId : targetIds) {
             Comment comment = new Comment();
             comment.setTargetId(targetId);
@@ -375,7 +381,7 @@ public class SubmissionService implements ApplicationRunner {
     /**
      *
      */
-    public void surveyPrepareApprove(Comment comment, String prepareViewDate,String viewDate,String viewPeopleIds, User loginUser) throws ParseException {
+    public void surveyPrepareApprove(Comment comment, String prepareViewDate, User loginUser) throws ParseException {
         Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
         if (submission == null || submission.getStatus() != 40) {
             throw new SystemException(30000);
@@ -386,13 +392,13 @@ public class SubmissionService implements ApplicationRunner {
         comment.setStage("survey_prepare");
         this.commentRepository.save(comment);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        this.submissionRepository.updateWhileSurveyPrepare(comment.getTargetId(), 50, sdf.parse(prepareViewDate), sdf.parse(viewDate), viewPeopleIds, loginUser.getId(), new Date());
+        this.submissionRepository.updateWhileSurveyPrepare(comment.getTargetId(), 50, sdf.parse(prepareViewDate), loginUser.getId(), new Date());
     }
 
     /**
      *
      */
-    public void surveySceneApprove(SurveySceneForm form, User loginUser) {
+    public void surveySceneApprove(SurveySceneForm form, User loginUser) throws ParseException {
         Submission submission = this.submissionRepository.findSubmissionById(form.getTargetId());
         if (submission == null || submission.getStatus() != 50) {
             throw new SystemException(30000);
@@ -407,9 +413,15 @@ public class SubmissionService implements ApplicationRunner {
         comment.setStage("survey_scene");
         this.commentRepository.save(comment);
         submission.setStatus(60);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        submission.setViewDate(sdf.parse(form.getViewDate()));
         submission.setSurveyFiles(form.getSurveyFiles());
         submission.setModifyId(loginUser.getId());
         submission.setModifyTime(new Date());
+        submission.setViewPeoplesAuditUnitIds(form.getViewPeoplesAuditUnitIds());
+        submission.setViewPeoplesBuildUnitIds(form.getViewPeoplesBuildUnitIds());
+        submission.setViewPeoplesConstructUnitIds(form.getViewPeoplesConstructUnitIds());
+        submission.setViewPeoplesEntrustUnitIds(form.getViewPeoplesEntrustUnitIds());
         this.submissionRepository.save(submission);
     }
 
@@ -440,7 +452,6 @@ public class SubmissionService implements ApplicationRunner {
         submission.setModifyTime(new Date());
         this.submissionRepository.save(submission);
     }
-
 
 
     /**
@@ -488,10 +499,15 @@ public class SubmissionService implements ApplicationRunner {
         submission.setStatus(80);
         submission.setPrepareViewDate2(form.getPrepareViewDate2() == null ? null : sdf.parse(form.getPrepareViewDate2()));
         submission.setViewDate2(form.getViewDate2() == null ? null : sdf.parse(form.getViewDate2()));
-        submission.setViewPeopleIds2(form.getViewPeopleIds2());
         submission.setSubmissionPrice(form.getSubmissionPrice());
         submission.setFirstAuditPrice(form.getFirstAuditPrice());
         submission.setAuditFirstFiles(form.getAuditFirstFiles());
+        submission.setAuditFirstSub(form.getAuditFirstSub());
+        submission.setAuditFirstSubRatio(form.getAuditFirstSubRatio());
+        submission.setViewPeoplesAuditUnitIds2(form.getViewPeoplesAuditUnitIds2());
+        submission.setViewPeoplesBuildUnitIds2(form.getViewPeoplesBuildUnitIds2());
+        submission.setViewPeoplesConstructUnitIds2(form.getViewPeoplesConstructUnitIds2());
+        submission.setViewPeoplesEntrustUnitIds2(form.getViewPeoplesEntrustUnitIds2());
         submission.setModifyId(loginUser.getId());
         submission.setModifyTime(new Date());
         this.submissionRepository.save(submission);
@@ -520,18 +536,79 @@ public class SubmissionService implements ApplicationRunner {
         BigDecimal auditFee = new BigDecimal(0);
         BigDecimal subtractPrice = submission.getSubmissionPrice().subtract(submission.getSecondAuditPrice());
         BigDecimal s1 = submission.getSubmissionPrice().floatValue() == 0 ? new BigDecimal(0) : subtractPrice.divide(submission.getSubmissionPrice(), 2, BigDecimal.ROUND_HALF_UP);
-        if(s1.floatValue() >= 0.05 && s1.floatValue() < 0.1) {
+        if (s1.floatValue() >= 0.05 && s1.floatValue() < 0.1) {
             auditFee = subtractPrice.multiply(new BigDecimal("0.05"));
-        } else if (s1.floatValue() >= 0.1){
+        } else if (s1.floatValue() >= 0.1) {
             auditFee = subtractPrice.multiply(new BigDecimal("0.1"));
         }
         submission.setAuditFee(auditFee);
         submission.setSubtractPrice(subtractPrice);
 
         submission.setAuditSecondFiles(form.getAuditSecondFiles());
+        submission.setAuditNote(form.getAuditNote());
+        submission.setAuditSecondSub(form.getAuditSecondSub());
+        submission.setAuditSecondSubRatio(form.getAuditSecondSubRatio());
         submission.setModifyId(loginUser.getId());
         submission.setModifyTime(new Date());
         this.submissionRepository.save(submission);
+    }
+
+    /**
+     *
+     */
+    public void completeApprove(Comment comment, User loginUser) {
+        Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
+        if (submission == null || submission.getStatus() != 90) {
+            throw new SystemException(30000);
+        }
+        comment.setTarget("submission");
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage("complete");
+        this.commentRepository.save(comment);
+        this.submissionRepository.updateStatus(submission.getId(), comment.getType() == Comment.CommentType.ALLOW ? 100 : 80, loginUser.getId(), new Date());
+    }
+
+    /**
+     *
+     */
+    public void completeApproves(Long[] targetIds, int type, String commentContent, User loginUser) {
+        for (Long targetId : targetIds) {
+            Comment comment = new Comment();
+            comment.setTargetId(targetId);
+            comment.setContent(commentContent);
+            comment.setType(Comment.CommentType.get(type));
+            this.completeApprove(comment, loginUser);
+        }
+    }
+
+    /**
+     *
+     */
+    public void filedApprove(Comment comment, User loginUser) {
+        Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
+        if (submission == null || submission.getStatus() != 100) {
+            throw new SystemException(30000);
+        }
+        comment.setTarget("submission");
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage("filed");
+        this.commentRepository.save(comment);
+        this.submissionRepository.updateStatus(submission.getId(), comment.getType() == Comment.CommentType.ALLOW ? 110 : 90, loginUser.getId(), new Date());
+    }
+
+    /**
+     *
+     */
+    public void filedApproves(Long[] targetIds, int type, String commentContent, User loginUser) {
+        for (Long targetId : targetIds) {
+            Comment comment = new Comment();
+            comment.setTargetId(targetId);
+            comment.setContent(commentContent);
+            comment.setType(Comment.CommentType.get(type));
+            this.filedApprove(comment, loginUser);
+        }
     }
 
     /**
@@ -542,7 +619,7 @@ public class SubmissionService implements ApplicationRunner {
     /**
      *
      */
-    @Override
+    //@Override
     public void run(ApplicationArguments applicationArguments) {
         String max = this.submissionRepository.findMaxAuditNo();
         if (max != null) {
@@ -570,6 +647,7 @@ public class SubmissionService implements ApplicationRunner {
      */
     @Autowired
     UserService userService;
+
     /**
      *
      */

@@ -64,16 +64,13 @@ public class ConstructionService {
      *
      */
     public void update(Construction form, User loginUser) {
-        Construction db = this.constructionRepository.findConstructionById(form.getId());
-        if(db == null) {
-            return;
-        }
-        db.setName(form.getName());
-        db.setContact(form.getContact());
-        db.setTelphone(form.getTelphone());
-        db.setModifyId(loginUser.getId());
-        db.setModifyTime(new Date());
-        this.constructionRepository.save(db);
+        Construction db = this.getById(form.getId());
+        form.setCreateTime(db.getCreateTime());
+        form.setCreatorId(db.getCreatorId());
+        form.setDel(false);
+        form.setModifyId(loginUser.getId());
+        form.setModifyTime(new Date());
+        this.constructionRepository.save(form);
     }
 
     /**

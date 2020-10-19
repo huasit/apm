@@ -30,6 +30,12 @@ public interface UserRepository extends CrudRepository<User, Long>, JpaSpecifica
     /**
      *
      */
+    @Query("from User where del=false and username=?1")
+    User findLoginUserByUsername(String username);
+
+    /**
+     *
+     */
     @Query("from User where del=false and username=?1 and password=?2")
     User findLoginUserByUsernameAndPassword(String username, String password);
 

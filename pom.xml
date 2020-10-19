@@ -92,6 +92,11 @@
             <artifactId>poi-ooxml-schemas</artifactId>
             <version>3.14</version>
         </dependency>
+        <dependency>
+            <groupId>org.jasig.cas.client</groupId>
+            <artifactId>cas-client-core</artifactId>
+            <version>3.3.3</version>
+        </dependency>
         <!-- Jsoup -->
         <dependency>
             <groupId>org.jsoup</groupId>

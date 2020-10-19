@@ -98,6 +98,11 @@ public class Comment {
     @Column(nullable = false)
     private Date createTime;
 
+
+    @Transient
+    private String auditNo;
+
+
     public Long getId() {
         return id;
     }
@@ -184,5 +189,13 @@ public class Comment {
 
     public void setStageStr(String stageStr) {
         this.stageStr = stageStr;
+    }
+
+    public String getAuditNo() {
+        return auditNo;
+    }
+
+    public void setAuditNo(String auditNo) {
+        this.auditNo = auditNo;
     }
 }

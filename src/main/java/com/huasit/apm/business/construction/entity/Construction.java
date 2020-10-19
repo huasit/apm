@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -37,18 +38,6 @@ public class Construction implements Serializable {
      *
      */
     @Column(nullable = false)
-    private String contact;
-
-    /**
-     *
-     */
-    @Column(nullable = false)
-    private String telphone;
-
-    /**
-     *
-     */
-    @Column(nullable = false)
     private Long modifyId;
 
     /**
@@ -71,6 +60,13 @@ public class Construction implements Serializable {
     @Column(nullable = false)
     private Date createTime;
 
+    /**
+     *
+     */
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name="cid")
+    private List<ConstructionLink> links;
+
     public Long getId() {
         return id;
     }
@@ -79,7 +75,7 @@ public class Construction implements Serializable {
         this.id = id;
     }
 
-    public boolean getDel() {
+    public boolean isDel() {
         return del;
     }
 
@@ -93,22 +89,6 @@ public class Construction implements Serializable {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getContact() {
-        return contact;
-    }
-
-    public void setContact(String contact) {
-        this.contact = contact;
-    }
-
-    public String getTelphone() {
-        return telphone;
-    }
-
-    public void setTelphone(String telphone) {
-        this.telphone = telphone;
     }
 
     public Long getModifyId() {
@@ -141,5 +121,13 @@ public class Construction implements Serializable {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
+    }
+
+    public List<ConstructionLink> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<ConstructionLink> links) {
+        this.links = links;
     }
 }

@@ -22,6 +22,12 @@ public class MaterialGroupDetail implements Serializable {
     /**
      *
      */
+    @Column
+    private boolean required;
+
+    /**
+     *
+     */
     @JsonBackReference
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "groupId", nullable = false)
@@ -43,6 +49,14 @@ public class MaterialGroupDetail implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public boolean isRequired() {
+        return required;
+    }
+
+    public void setRequired(boolean required) {
+        this.required = required;
     }
 
     public MaterialGroup getGroup() {

@@ -1,9 +1,6 @@
 package com.huasit.apm.core.user.service;
 
-import com.huasit.apm.core.user.entity.User;
-import com.huasit.apm.core.user.entity.UserRepository;
-import com.huasit.apm.core.user.entity.UserToken;
-import com.huasit.apm.core.user.entity.UserTokenRepository;
+import com.huasit.apm.core.user.entity.*;
 import com.huasit.apm.system.exception.SystemException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -39,6 +36,13 @@ public class UserService {
     /**
      *
      */
+    public UserLink getUserLinkById(Long id) {
+        return this.userLinkRepository.findUserLinkById(id);
+    }
+
+    /**
+     *
+     */
     public Page<User> list(User form, int page, int pageSize, User loginUser) {
         PageRequest pageRequest = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Order.desc("id")));
         return this.userRepository.findAll(new Specification<User>() {
@@ -49,6 +53,9 @@ public class UserService {
                 predicates.add(cb.equal(root.get("thirdParty").as(boolean.class), form.isThirdParty()));
                 if (form.getName() != null && !"".equals(form.getName())) {
                     predicates.add(cb.like(root.get("name").as(String.class), "%"+  form.getName().trim() + "%"));
+                }
+                if(!loginUser.isAdmin()) {
+                    predicates.add(cb.equal(root.get("id").as(Long.class), loginUser.getId()));
                 }
                 if (predicates.size() > 0) {
                     Predicate[] array = new Predicate[predicates.size()];
@@ -94,6 +101,13 @@ public class UserService {
     /**
      *
      */
+    public User getLoginUserByUsername(String username) {
+        return this.userRepository.findLoginUserByUsername(username);
+    }
+
+    /**
+     *
+     */
     public User getLoginUserByUsernameAndPassword(String username, String password) {
         return this.userRepository.findLoginUserByUsernameAndPassword(username, password);
     }
@@ -124,6 +138,12 @@ public class UserService {
      */
     @Autowired
     UserRepository userRepository;
+
+    /**
+     *
+     */
+    @Autowired
+    UserLinkRepository userLinkRepository;
 
     /**
      *

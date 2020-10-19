@@ -95,6 +95,13 @@ public class RoleService {
     /**
      *
      */
+    public void delete(Long id, User loginUser) {
+        this.roleRepository.updateDel(id, true, loginUser.getId(), new Date());
+    }
+
+    /**
+     *
+     */
     @Autowired
     RoleRepository roleRepository;
 

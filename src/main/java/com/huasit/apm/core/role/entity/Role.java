@@ -60,7 +60,7 @@ public class Role {
     /**
      *
      */
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name="rid")
     private List<RoleUser> users;
 

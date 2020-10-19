@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 /**
  *
@@ -13,7 +15,7 @@ import java.util.Date;
 @Table(name = "USER")
 public class User implements Serializable {
 
-	/**
+    /**
      *
      */
     @Id
@@ -66,12 +68,6 @@ public class User implements Serializable {
      *
      */
     @Column
-    private String thirdPartyName;
-
-    /**
-     *
-     */
-    @Column
     private Long modifyId;
 
     /**
@@ -98,6 +94,35 @@ public class User implements Serializable {
     @JsonIgnore
     @Transient
     private UserToken token;
+
+    /**
+     *
+     */
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "uid")
+    private List<UserLink> links;
+
+    /**
+     *
+     */
+    @Transient
+    private boolean admin;
+
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof User)) {
+            return false;
+        }
+        User user = (User) obj;
+        return this.id != null && this.id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
+    }
 
     public Long getId() {
         return id;
@@ -163,14 +188,6 @@ public class User implements Serializable {
         this.thirdParty = thirdParty;
     }
 
-    public String getThirdPartyName() {
-        return thirdPartyName;
-    }
-
-    public void setThirdPartyName(String thirdPartyName) {
-        this.thirdPartyName = thirdPartyName;
-    }
-
     public Long getModifyId() {
         return modifyId;
     }
@@ -209,5 +226,21 @@ public class User implements Serializable {
 
     public void setToken(UserToken token) {
         this.token = token;
+    }
+
+    public List<UserLink> getLinks() {
+        return links;
+    }
+
+    public void setLinks(List<UserLink> links) {
+        this.links = links;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
     }
 }

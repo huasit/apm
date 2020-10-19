@@ -26,7 +26,7 @@ public class MaterialGroup implements Serializable {
      */
     @JsonIgnore
     @Column(nullable = false)
-    private Boolean del;
+    private boolean del;
 
     /**
      *
@@ -72,11 +72,11 @@ public class MaterialGroup implements Serializable {
         this.id = id;
     }
 
-    public Boolean getDel() {
+    public boolean isDel() {
         return del;
     }
 
-    public void setDel(Boolean del) {
+    public void setDel(boolean del) {
         this.del = del;
     }
 

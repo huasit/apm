@@ -15,12 +15,23 @@ public class SurveySceneForm {
     /**
      *
      */
+    private String viewDate;
+
+    /**
+     *
+     */
     private Comment.CommentType type;
 
     /**
      *
      */
     private String comment;
+
+
+    private String viewPeoplesAuditUnitIds;
+    private String viewPeoplesBuildUnitIds;
+    private String viewPeoplesConstructUnitIds;
+    private String viewPeoplesEntrustUnitIds;
 
     /**
      *
@@ -33,6 +44,14 @@ public class SurveySceneForm {
 
     public void setTargetId(Long targetId) {
         this.targetId = targetId;
+    }
+
+    public String getViewDate() {
+        return viewDate;
+    }
+
+    public void setViewDate(String viewDate) {
+        this.viewDate = viewDate;
     }
 
     public Comment.CommentType getType() {
@@ -49,6 +68,38 @@ public class SurveySceneForm {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public String getViewPeoplesAuditUnitIds() {
+        return viewPeoplesAuditUnitIds;
+    }
+
+    public void setViewPeoplesAuditUnitIds(String viewPeoplesAuditUnitIds) {
+        this.viewPeoplesAuditUnitIds = viewPeoplesAuditUnitIds;
+    }
+
+    public String getViewPeoplesBuildUnitIds() {
+        return viewPeoplesBuildUnitIds;
+    }
+
+    public void setViewPeoplesBuildUnitIds(String viewPeoplesBuildUnitIds) {
+        this.viewPeoplesBuildUnitIds = viewPeoplesBuildUnitIds;
+    }
+
+    public String getViewPeoplesConstructUnitIds() {
+        return viewPeoplesConstructUnitIds;
+    }
+
+    public void setViewPeoplesConstructUnitIds(String viewPeoplesConstructUnitIds) {
+        this.viewPeoplesConstructUnitIds = viewPeoplesConstructUnitIds;
+    }
+
+    public String getViewPeoplesEntrustUnitIds() {
+        return viewPeoplesEntrustUnitIds;
+    }
+
+    public void setViewPeoplesEntrustUnitIds(String viewPeoplesEntrustUnitIds) {
+        this.viewPeoplesEntrustUnitIds = viewPeoplesEntrustUnitIds;
     }
 
     public List<SubmissionSurveyFile> getSurveyFiles() {

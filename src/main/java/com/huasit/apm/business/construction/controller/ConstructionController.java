@@ -46,7 +46,7 @@ public class ConstructionController {
      */
     @ResponseBody
     @PostMapping("/addOrUpdate/")
-    public ResponseEntity<Map<String, Object>> addOrUpate(Construction form, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> addOrUpate(@RequestBody Construction form, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
         if(form.getId() == null) {
             this.constructionService.add(form, loginUser);

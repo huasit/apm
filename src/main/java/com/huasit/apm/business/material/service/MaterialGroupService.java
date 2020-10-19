@@ -29,58 +29,34 @@ public class MaterialGroupService {
     /**
      *
      */
-    public MaterialGroup add(String name, Long[] materialIds, User loginUser) {
-        MaterialGroup materialGroup = new MaterialGroup();
-        materialGroup.setName(name);
-        materialGroup.setDel(false);
-        materialGroup.setCreatorId(loginUser.getId());
-        materialGroup.setCreateTime(new Date());
-        materialGroup.setModifyId(materialGroup.getCreatorId());
-        materialGroup.setModifyTime(materialGroup.getCreateTime());
+    public void addOrUpdate(MaterialGroup materialGroup, User loginUser) {
+        Date now = new Date();
+        if(materialGroup.getId() == null) {
+            materialGroup.setDel(false);
+            materialGroup.setCreateTime(now);
+            materialGroup.setCreatorId(loginUser.getId());
+        } else {
+            MaterialGroup db = this.materialGroupRepository.findMaterialById(materialGroup.getId());
+            materialGroup.setDel(db.isDel());
+            materialGroup.setCreateTime(db.getCreateTime());
+            materialGroup.setCreatorId(db.getCreatorId());
+        }
+        materialGroup.setModifyTime(now);
+        materialGroup.setModifyId(loginUser.getId());
         List<MaterialGroupDetail> details = new ArrayList<>();
-        if(materialIds != null && materialIds.length > 0) {
-            for(Long materialId : materialIds) {
-                Material material = this.materialRepository.findMaterialById(materialId);
+        if(materialGroup.getDetails() != null) {
+            for(MaterialGroupDetail detail : materialGroup.getDetails()) {
+                Material material = this.materialRepository.findMaterialById(detail.getMaterial().getId());
                 if(material == null) {
                     continue;
                 }
-                MaterialGroupDetail detail = new MaterialGroupDetail();
                 detail.setMaterial(material);
                 detail.setGroup(materialGroup);
                 details.add(detail);
             }
-            materialGroup.setDetails(details);
         }
+        materialGroup.setDetails(details);
         this.materialGroupRepository.save(materialGroup);
-        return materialGroup;
-    }
-
-    /**
-     *
-     */
-    public MaterialGroup update(Long id, String name, Long[] materialIds, User loginUser) {
-        MaterialGroup db = this.materialGroupRepository.findMaterialById(id);
-        db.setName(name);
-        db.setModifyId(loginUser.getId());
-        db.setModifyTime(new Date());
-        if(materialIds != null && materialIds.length > 0) {
-            List<MaterialGroupDetail> details = new ArrayList<>();
-            for(Long materialId : materialIds) {
-                Material material = this.materialRepository.findMaterialById(materialId);
-                if(material == null) {
-                    continue;
-                }
-                MaterialGroupDetail detail = new MaterialGroupDetail();
-                detail.setMaterial(material);
-                detail.setGroup(db);
-                details.add(detail);
-            }
-            db.setDetails(details);
-        } else {
-            db.setDetails(new ArrayList<>());
-        }
-        this.materialGroupRepository.save(db);
-        return db;
     }
 
     /**

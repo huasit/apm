@@ -1,15 +1,21 @@
 package com.huasit.apm.core.user.service;
 
-import com.huasit.apm.system.util.WebUtil;
+import com.huasit.apm.core.role.service.RoleService;
 import com.huasit.apm.core.user.entity.User;
+import com.huasit.apm.core.user.entity.UserRepository;
 import com.huasit.apm.core.user.entity.UserToken;
+import com.huasit.apm.system.exception.SystemException;
+import com.huasit.apm.system.util.WebUtil;
+import org.jasig.cas.client.authentication.AttributePrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
+import java.util.Date;
 
 /**
  *
@@ -45,7 +51,7 @@ public class UserLoginService {
 	public User getLoginUser(HttpServletRequest request) {
 		User user = (User) request.getAttribute(USER_IN_REQUEST);
 		if (null != user) {
-			return user;
+			return this.checkUserRole(user);
 		}
 		String token = request.getHeader("Authorization");
 		if(token != null && token.startsWith("Bearer ")) {
@@ -58,6 +64,19 @@ public class UserLoginService {
 		}
 		user = this.userService.getLoginUserByToken(token);
 		request.setAttribute(USER_IN_REQUEST, user);
+		return this.checkUserRole(user);
+	}
+
+	/**
+	 *
+	 */
+	public User checkUserRole(User user) {
+		if(user == null) {
+			return null;
+		}
+		if(new Long(1).equals(user.getId()) || this.roleService.checkUserHasRole(user.getId(), "admin")) {
+			user.setAdmin(true);
+		}
 		return user;
 	}
 
@@ -77,6 +96,34 @@ public class UserLoginService {
 	/**
 	 *
 	 */
+	public User userLoginByThirdParty(AttributePrincipal principal, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		User user = this.userService.getLoginUserByUsername(principal.getName());
+		BASE64Decoder decoder = new BASE64Decoder();
+		if (user == null) {
+			Date now = new Date();
+			user = new User();
+			user.setDel(false);
+			user.setThirdParty(false);
+			user.setCreatorId(0L);
+			user.setCreateTime(now);
+			user.setModifyId(0L);
+			user.setModifyTime(now);
+			user.setUsername(principal.getName());
+			user.setPassword("***");
+			user.setName(new String(decoder.decodeBuffer(principal.getAttributes().get("ACPNAME").toString()), "UTF-8"));
+			user.setEmail("");
+			user.setTelphone("");
+			this.userRepository.save(user);
+		}
+		UserToken userToken = this.userService.createUserToken(user, WebUtil.getIpAddress(request));
+		user.setToken(userToken);
+		this.setCookie(user, request, response);
+		return user;
+	}
+
+	/**
+	 *
+	 */
 	public boolean checkLogin(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		if (request.getRequestURI().contains("/login/")) {
 			return true;
@@ -85,8 +132,7 @@ public class UserLoginService {
 		if (loginUser != null) {
 			return true;
 		}
-		response.sendRedirect(contextPath + "/login/");
-		return false;
+		throw new SystemException(10000);
 	}
 
 	/**
@@ -112,4 +158,16 @@ public class UserLoginService {
 	 */
 	@Autowired
 	UserService userService;
+
+	/**
+	 *
+	 */
+	@Autowired
+	RoleService roleService;
+
+	/**
+	 *
+	 */
+	@Autowired
+	UserRepository userRepository;
 }

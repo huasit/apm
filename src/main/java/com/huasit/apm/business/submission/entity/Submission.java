@@ -3,6 +3,7 @@ package com.huasit.apm.business.submission.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.huasit.apm.core.user.entity.User;
+import com.huasit.apm.core.user.entity.UserLink;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -30,26 +31,33 @@ public class Submission implements Serializable {
      *
      */
     @JsonIgnore
-    @Column(nullable = false)
+    @Column
     private boolean del;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private int status;
 
     /**
      *
      */
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.REFRESH)
-    @JoinColumn(name="assignedId")
+    @JoinColumn(name = "assignedId")
     private User assigned;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.REFRESH)
+    @JoinColumn(name = "assignedLinkId")
+    private UserLink assignedLink;
+
+    /**
+     *
+     */
+    @Column
     private String itemCode;
 
     /**
@@ -65,12 +73,12 @@ public class Submission implements Serializable {
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private String contractNo;
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private String projectName;
     /**
      *
@@ -219,12 +227,6 @@ public class Submission implements Serializable {
     /**
      *
      */
-    @Column(nullable = false)
-    private String viewPeopleIds;
-
-    /**
-     *
-     */
     @Column
     @Temporal(TemporalType.TIMESTAMP)
     private Date viewDate2;
@@ -235,12 +237,6 @@ public class Submission implements Serializable {
     @Column
     @Temporal(TemporalType.TIMESTAMP)
     private Date prepareViewDate2;
-
-    /**
-     *
-     */
-    @Column(nullable = false)
-    private String viewPeopleIds2;
 
     /**
      *
@@ -272,30 +268,67 @@ public class Submission implements Serializable {
     @Column
     private BigDecimal auditFee;
 
+    @Column
+    private String payTypeOther;
+    @Column
+    private String payConditionOther;
+    @Column
+    private String constructionUnitProjectMan;
+    @Column
+    private String inspectUnitProjectMan;
+    @Column
+    private String buildUnitProjectMan;
+    @Column
+    private String viewPeoplesAuditUnitIds;
+    @Column
+    private String viewPeoplesAuditUnitIds2;
+    @Column
+    private String viewPeoplesBuildUnitIds;
+    @Column
+    private String viewPeoplesConstructUnitIds;
+    @Column
+    private String viewPeoplesEntrustUnitIds;
+    @Column
+    private String viewPeoplesBuildUnitIds2;
+    @Column
+    private String viewPeoplesConstructUnitIds2;
+    @Column
+    private String viewPeoplesEntrustUnitIds2;
+    @Column
+    private String auditFirstSub;
+    @Column
+    private String auditFirstSubRatio;
+    @Column
+    private String auditSecondSub;
+    @Column
+    private String auditNote;
+    @Column
+    private String auditSecondSubRatio;
+
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private Long modifyId;
 
     /**
      *
      */
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(nullable = false)
+    @Column
     private Date modifyTime;
 
     /**
      *
      */
-    @Column(nullable = false)
+    @Column
     private Long creatorId;
 
     /**
      *
      */
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(nullable = false)
+    @Column
     private Date createTime;
 
     /**
@@ -303,7 +336,7 @@ public class Submission implements Serializable {
      */
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Fetch(FetchMode.SUBSELECT)
-    @JoinColumn(name="sid")
+    @JoinColumn(name = "sid")
     private List<SubmissionDetail> details;
 
     /**
@@ -311,7 +344,7 @@ public class Submission implements Serializable {
      */
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Fetch(FetchMode.SUBSELECT)
-    @JoinColumn(name="sid")
+    @JoinColumn(name = "sid")
     private List<SubmissionSurveyFile> surveyFiles;
 
     /**
@@ -319,7 +352,7 @@ public class Submission implements Serializable {
      */
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Fetch(FetchMode.SUBSELECT)
-    @JoinColumn(name="sid")
+    @JoinColumn(name = "sid")
     private List<SubmissionArgueFile> argueFiles;
 
     /**
@@ -327,7 +360,7 @@ public class Submission implements Serializable {
      */
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Fetch(FetchMode.SUBSELECT)
-    @JoinColumn(name="sid")
+    @JoinColumn(name = "sid")
     private List<SubmissionSupplementFile> supplementFiles;
 
     /**
@@ -335,7 +368,7 @@ public class Submission implements Serializable {
      */
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Fetch(FetchMode.SUBSELECT)
-    @JoinColumn(name="sid")
+    @JoinColumn(name = "sid")
     private List<SubmissionAuditFirst> auditFirstFiles;
 
     /**
@@ -343,7 +376,7 @@ public class Submission implements Serializable {
      */
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @Fetch(FetchMode.SUBSELECT)
-    @JoinColumn(name="sid")
+    @JoinColumn(name = "sid")
     private List<SubmissionAuditSecond> auditSecondFiles;
 
     public Long getId() {
@@ -362,22 +395,6 @@ public class Submission implements Serializable {
         this.del = del;
     }
 
-    public String getPayType() {
-        return payType;
-    }
-
-    public void setPayType(String payType) {
-        this.payType = payType;
-    }
-
-    public String getPayCondition() {
-        return payCondition;
-    }
-
-    public void setPayCondition(String payCondition) {
-        this.payCondition = payCondition;
-    }
-
     public int getStatus() {
         return status;
     }
@@ -394,12 +411,28 @@ public class Submission implements Serializable {
         this.assigned = assigned;
     }
 
+    public UserLink getAssignedLink() {
+        return assignedLink;
+    }
+
+    public void setAssignedLink(UserLink assignedLink) {
+        this.assignedLink = assignedLink;
+    }
+
     public String getItemCode() {
         return itemCode;
     }
 
     public void setItemCode(String itemCode) {
         this.itemCode = itemCode;
+    }
+
+    public String getAuditType() {
+        return auditType;
+    }
+
+    public void setAuditType(String auditType) {
+        this.auditType = auditType;
     }
 
     public String getAuditNo() {
@@ -570,6 +603,22 @@ public class Submission implements Serializable {
         this.content = content;
     }
 
+    public String getPayType() {
+        return payType;
+    }
+
+    public void setPayType(String payType) {
+        this.payType = payType;
+    }
+
+    public String getPayCondition() {
+        return payCondition;
+    }
+
+    public void setPayCondition(String payCondition) {
+        this.payCondition = payCondition;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -584,6 +633,222 @@ public class Submission implements Serializable {
 
     public void setMaterialGroup(Integer materialGroup) {
         this.materialGroup = materialGroup;
+    }
+
+    public Date getViewDate() {
+        return viewDate;
+    }
+
+    public void setViewDate(Date viewDate) {
+        this.viewDate = viewDate;
+    }
+
+    public Date getPrepareViewDate() {
+        return prepareViewDate;
+    }
+
+    public void setPrepareViewDate(Date prepareViewDate) {
+        this.prepareViewDate = prepareViewDate;
+    }
+
+    public Date getViewDate2() {
+        return viewDate2;
+    }
+
+    public void setViewDate2(Date viewDate2) {
+        this.viewDate2 = viewDate2;
+    }
+
+    public Date getPrepareViewDate2() {
+        return prepareViewDate2;
+    }
+
+    public void setPrepareViewDate2(Date prepareViewDate2) {
+        this.prepareViewDate2 = prepareViewDate2;
+    }
+
+    public BigDecimal getSubmissionPrice() {
+        return submissionPrice;
+    }
+
+    public void setSubmissionPrice(BigDecimal submissionPrice) {
+        this.submissionPrice = submissionPrice;
+    }
+
+    public BigDecimal getFirstAuditPrice() {
+        return firstAuditPrice;
+    }
+
+    public void setFirstAuditPrice(BigDecimal firstAuditPrice) {
+        this.firstAuditPrice = firstAuditPrice;
+    }
+
+    public BigDecimal getSecondAuditPrice() {
+        return secondAuditPrice;
+    }
+
+    public void setSecondAuditPrice(BigDecimal secondAuditPrice) {
+        this.secondAuditPrice = secondAuditPrice;
+    }
+
+    public BigDecimal getSubtractPrice() {
+        return subtractPrice;
+    }
+
+    public void setSubtractPrice(BigDecimal subtractPrice) {
+        this.subtractPrice = subtractPrice;
+    }
+
+    public BigDecimal getAuditFee() {
+        return auditFee;
+    }
+
+    public void setAuditFee(BigDecimal auditFee) {
+        this.auditFee = auditFee;
+    }
+
+    public String getPayTypeOther() {
+        return payTypeOther;
+    }
+
+    public void setPayTypeOther(String payTypeOther) {
+        this.payTypeOther = payTypeOther;
+    }
+
+    public String getPayConditionOther() {
+        return payConditionOther;
+    }
+
+    public void setPayConditionOther(String payConditionOther) {
+        this.payConditionOther = payConditionOther;
+    }
+
+    public String getConstructionUnitProjectMan() {
+        return constructionUnitProjectMan;
+    }
+
+    public void setConstructionUnitProjectMan(String constructionUnitProjectMan) {
+        this.constructionUnitProjectMan = constructionUnitProjectMan;
+    }
+
+    public String getInspectUnitProjectMan() {
+        return inspectUnitProjectMan;
+    }
+
+    public void setInspectUnitProjectMan(String inspectUnitProjectMan) {
+        this.inspectUnitProjectMan = inspectUnitProjectMan;
+    }
+
+    public String getBuildUnitProjectMan() {
+        return buildUnitProjectMan;
+    }
+
+    public void setBuildUnitProjectMan(String buildUnitProjectMan) {
+        this.buildUnitProjectMan = buildUnitProjectMan;
+    }
+
+    public String getViewPeoplesAuditUnitIds() {
+        return viewPeoplesAuditUnitIds;
+    }
+
+    public void setViewPeoplesAuditUnitIds(String viewPeoplesAuditUnitIds) {
+        this.viewPeoplesAuditUnitIds = viewPeoplesAuditUnitIds;
+    }
+
+    public String getViewPeoplesAuditUnitIds2() {
+        return viewPeoplesAuditUnitIds2;
+    }
+
+    public void setViewPeoplesAuditUnitIds2(String viewPeoplesAuditUnitIds2) {
+        this.viewPeoplesAuditUnitIds2 = viewPeoplesAuditUnitIds2;
+    }
+
+    public String getViewPeoplesBuildUnitIds() {
+        return viewPeoplesBuildUnitIds;
+    }
+
+    public void setViewPeoplesBuildUnitIds(String viewPeoplesBuildUnitIds) {
+        this.viewPeoplesBuildUnitIds = viewPeoplesBuildUnitIds;
+    }
+
+    public String getViewPeoplesConstructUnitIds() {
+        return viewPeoplesConstructUnitIds;
+    }
+
+    public void setViewPeoplesConstructUnitIds(String viewPeoplesConstructUnitIds) {
+        this.viewPeoplesConstructUnitIds = viewPeoplesConstructUnitIds;
+    }
+
+    public String getViewPeoplesEntrustUnitIds() {
+        return viewPeoplesEntrustUnitIds;
+    }
+
+    public void setViewPeoplesEntrustUnitIds(String viewPeoplesEntrustUnitIds) {
+        this.viewPeoplesEntrustUnitIds = viewPeoplesEntrustUnitIds;
+    }
+
+    public String getViewPeoplesBuildUnitIds2() {
+        return viewPeoplesBuildUnitIds2;
+    }
+
+    public void setViewPeoplesBuildUnitIds2(String viewPeoplesBuildUnitIds2) {
+        this.viewPeoplesBuildUnitIds2 = viewPeoplesBuildUnitIds2;
+    }
+
+    public String getViewPeoplesConstructUnitIds2() {
+        return viewPeoplesConstructUnitIds2;
+    }
+
+    public void setViewPeoplesConstructUnitIds2(String viewPeoplesConstructUnitIds2) {
+        this.viewPeoplesConstructUnitIds2 = viewPeoplesConstructUnitIds2;
+    }
+
+    public String getViewPeoplesEntrustUnitIds2() {
+        return viewPeoplesEntrustUnitIds2;
+    }
+
+    public void setViewPeoplesEntrustUnitIds2(String viewPeoplesEntrustUnitIds2) {
+        this.viewPeoplesEntrustUnitIds2 = viewPeoplesEntrustUnitIds2;
+    }
+
+    public String getAuditFirstSub() {
+        return auditFirstSub;
+    }
+
+    public void setAuditFirstSub(String auditFirstSub) {
+        this.auditFirstSub = auditFirstSub;
+    }
+
+    public String getAuditFirstSubRatio() {
+        return auditFirstSubRatio;
+    }
+
+    public void setAuditFirstSubRatio(String auditFirstSubRatio) {
+        this.auditFirstSubRatio = auditFirstSubRatio;
+    }
+
+    public String getAuditSecondSub() {
+        return auditSecondSub;
+    }
+
+    public void setAuditSecondSub(String auditSecondSub) {
+        this.auditSecondSub = auditSecondSub;
+    }
+
+    public String getAuditNote() {
+        return auditNote;
+    }
+
+    public void setAuditNote(String auditNote) {
+        this.auditNote = auditNote;
+    }
+
+    public String getAuditSecondSubRatio() {
+        return auditSecondSubRatio;
+    }
+
+    public void setAuditSecondSubRatio(String auditSecondSubRatio) {
+        this.auditSecondSubRatio = auditSecondSubRatio;
     }
 
     public Long getModifyId() {
@@ -626,54 +891,6 @@ public class Submission implements Serializable {
         this.details = details;
     }
 
-    public Date getViewDate() {
-        return viewDate;
-    }
-
-    public void setViewDate(Date viewDate) {
-        this.viewDate = viewDate;
-    }
-
-    public Date getPrepareViewDate() {
-        return prepareViewDate;
-    }
-
-    public void setPrepareViewDate(Date prepareViewDate) {
-        this.prepareViewDate = prepareViewDate;
-    }
-
-    public String getViewPeopleIds() {
-        return viewPeopleIds;
-    }
-
-    public void setViewPeopleIds(String viewPeopleIds) {
-        this.viewPeopleIds = viewPeopleIds;
-    }
-
-    public BigDecimal getSubmissionPrice() {
-        return submissionPrice;
-    }
-
-    public void setSubmissionPrice(BigDecimal submissionPrice) {
-        this.submissionPrice = submissionPrice;
-    }
-
-    public BigDecimal getFirstAuditPrice() {
-        return firstAuditPrice;
-    }
-
-    public void setFirstAuditPrice(BigDecimal firstAuditPrice) {
-        this.firstAuditPrice = firstAuditPrice;
-    }
-
-    public BigDecimal getSecondAuditPrice() {
-        return secondAuditPrice;
-    }
-
-    public void setSecondAuditPrice(BigDecimal secondAuditPrice) {
-        this.secondAuditPrice = secondAuditPrice;
-    }
-
     public List<SubmissionSurveyFile> getSurveyFiles() {
         return surveyFiles;
     }
@@ -690,6 +907,14 @@ public class Submission implements Serializable {
         this.argueFiles = argueFiles;
     }
 
+    public List<SubmissionSupplementFile> getSupplementFiles() {
+        return supplementFiles;
+    }
+
+    public void setSupplementFiles(List<SubmissionSupplementFile> supplementFiles) {
+        this.supplementFiles = supplementFiles;
+    }
+
     public List<SubmissionAuditFirst> getAuditFirstFiles() {
         return auditFirstFiles;
     }
@@ -704,61 +929,5 @@ public class Submission implements Serializable {
 
     public void setAuditSecondFiles(List<SubmissionAuditSecond> auditSecondFiles) {
         this.auditSecondFiles = auditSecondFiles;
-    }
-
-    public BigDecimal getSubtractPrice() {
-        return subtractPrice;
-    }
-
-    public void setSubtractPrice(BigDecimal subtractPrice) {
-        this.subtractPrice = subtractPrice;
-    }
-
-    public BigDecimal getAuditFee() {
-        return auditFee;
-    }
-
-    public void setAuditFee(BigDecimal auditFee) {
-        this.auditFee = auditFee;
-    }
-
-    public List<SubmissionSupplementFile> getSupplementFiles() {
-        return supplementFiles;
-    }
-
-    public void setSupplementFiles(List<SubmissionSupplementFile> supplementFiles) {
-        this.supplementFiles = supplementFiles;
-    }
-
-    public Date getViewDate2() {
-        return viewDate2;
-    }
-
-    public void setViewDate2(Date viewDate2) {
-        this.viewDate2 = viewDate2;
-    }
-
-    public Date getPrepareViewDate2() {
-        return prepareViewDate2;
-    }
-
-    public void setPrepareViewDate2(Date prepareViewDate2) {
-        this.prepareViewDate2 = prepareViewDate2;
-    }
-
-    public String getViewPeopleIds2() {
-        return viewPeopleIds2;
-    }
-
-    public void setViewPeopleIds2(String viewPeopleIds2) {
-        this.viewPeopleIds2 = viewPeopleIds2;
-    }
-
-    public String getAuditType() {
-        return auditType;
-    }
-
-    public void setAuditType(String auditType) {
-        this.auditType = auditType;
     }
 }

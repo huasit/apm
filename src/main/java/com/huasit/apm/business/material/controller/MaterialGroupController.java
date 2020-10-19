@@ -10,10 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -48,14 +45,9 @@ public class MaterialGroupController {
      */
     @ResponseBody
     @PostMapping("/addOrUpdate/")
-    public ResponseEntity<Map<String, Object>> addOrUpate(Long id, String name, Long[] materialId, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> addOrUpate(@RequestBody MaterialGroup materialGroup, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        MaterialGroup materialGroup;
-        if(id == null) {
-            materialGroup = this.materialGroupService.add(name, materialId, loginUser);
-        } else {
-            materialGroup = this.materialGroupService.update(id, name, materialId, loginUser);
-        }
+        this.materialGroupService.addOrUpdate(materialGroup, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("materialGroup", materialGroup), HttpStatus.OK);
     }
 
