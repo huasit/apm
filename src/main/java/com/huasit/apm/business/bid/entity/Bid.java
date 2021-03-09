@@ -2,8 +2,8 @@ package com.huasit.apm.business.bid.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.huasit.apm.business.thirdparty.entity.Thirdparty;
 import com.huasit.apm.core.user.entity.User;
-import com.huasit.apm.core.user.entity.UserLink;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -51,8 +51,8 @@ public class Bid implements Serializable {
      *
      */
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.REFRESH)
-    @JoinColumn(name = "assignedLinkId")
-    private UserLink assignedLink;
+    @JoinColumn(name = "thirdpartyId")
+    private Thirdparty thirdparty;
 
     /**
      *
@@ -165,6 +165,14 @@ public class Bid implements Serializable {
     private String bidManTel;
     @Column
     private BigDecimal subMoney;
+    @Column
+    private String memberIds;
+    @Column
+    private String projectSum;
+    @Column
+    private String qas;
+    @Column
+    private String auditSecondNote;
 
     /**
      *
@@ -216,6 +224,18 @@ public class Bid implements Serializable {
     @JoinColumn(name = "sid")
     private List<BidAuditSecond> auditSecondFiles;
 
+    /**
+     *
+     */
+    @Transient
+    private Long workitemId;
+
+    /**
+     *
+     */
+    @Transient
+    private List<Integer> statuses;
+
     public Long getId() {
         return id;
     }
@@ -248,12 +268,28 @@ public class Bid implements Serializable {
         this.assigned = assigned;
     }
 
-    public UserLink getAssignedLink() {
-        return assignedLink;
+    public String getQas() {
+        return qas;
     }
 
-    public void setAssignedLink(UserLink assignedLink) {
-        this.assignedLink = assignedLink;
+    public void setQas(String qas) {
+        this.qas = qas;
+    }
+
+    public String getAuditSecondNote() {
+        return auditSecondNote;
+    }
+
+    public void setAuditSecondNote(String auditSecondNote) {
+        this.auditSecondNote = auditSecondNote;
+    }
+
+    public Thirdparty getThirdparty() {
+        return thirdparty;
+    }
+
+    public void setThirdparty(Thirdparty thirdparty) {
+        this.thirdparty = thirdparty;
     }
 
     public String getItemCode() {
@@ -286,6 +322,14 @@ public class Bid implements Serializable {
 
     public void setProjectName(String projectName) {
         this.projectName = projectName;
+    }
+
+    public String getProjectSum() {
+        return projectSum;
+    }
+
+    public void setProjectSum(String projectSum) {
+        this.projectSum = projectSum;
     }
 
     public String getFeeFrom() {
@@ -510,5 +554,29 @@ public class Bid implements Serializable {
 
     public void setAuditSecondFiles(List<BidAuditSecond> auditSecondFiles) {
         this.auditSecondFiles = auditSecondFiles;
+    }
+
+    public Long getWorkitemId() {
+        return workitemId;
+    }
+
+    public void setWorkitemId(Long workitemId) {
+        this.workitemId = workitemId;
+    }
+
+    public String getMemberIds() {
+        return memberIds;
+    }
+
+    public void setMemberIds(String memberIds) {
+        this.memberIds = memberIds;
+    }
+
+    public List<Integer> getStatuses() {
+        return statuses;
+    }
+
+    public void setStatuses(List<Integer> statuses) {
+        this.statuses = statuses;
     }
 }

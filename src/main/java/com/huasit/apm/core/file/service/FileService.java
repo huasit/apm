@@ -5,9 +5,12 @@ import com.huasit.apm.core.file.entity.FileRepository;
 import com.huasit.apm.core.user.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.MultipartConfigFactory;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.MultipartConfigElement;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
@@ -19,8 +22,27 @@ public class FileService {
     /**
      *
      */
+    @Value("${temp.path}")
+    private String tempPath;
+
+    /**
+     *
+     */
     @Value("${storage.path}")
     private String storagePath;
+
+    /**
+     *
+     */
+    @Bean
+    MultipartConfigElement multipartConfigElement() {
+        if(!new java.io.File(tempPath).exists()) {
+            new java.io.File(tempPath).mkdirs();
+        }
+        MultipartConfigFactory factory = new MultipartConfigFactory();
+        factory.setLocation(tempPath);
+        return factory.createMultipartConfig();
+    }
 
     /**
      *

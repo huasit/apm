@@ -24,7 +24,6 @@ public class SystemExceptionHandler {
     @ResponseBody
     @ExceptionHandler(value = SystemException.class)
     public ResponseEntity<Map<String, Object>> systemExceptionHandler(HttpServletRequest request, SystemException e) throws Exception {
-        LogManager.getLogger().error(e);
         return new ResponseEntity<>(LocaleUtil.getErrorResponseEntity(request, e.code), HttpStatus.BAD_REQUEST);
     }
 
@@ -35,6 +34,6 @@ public class SystemExceptionHandler {
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<Map<String, Object>> exceptionHandler(HttpServletRequest request, Exception e) throws Exception {
         LogManager.getLogger().error(e);
-        return new ResponseEntity<>(ImmutableMap.of("error_code", 1000, "error_msg", e.getMessage()), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(ImmutableMap.of("error_code", 1000, "error_msg", e.getMessage() == null ? "" : e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 }

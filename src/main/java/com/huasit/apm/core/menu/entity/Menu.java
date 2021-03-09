@@ -75,6 +75,13 @@ public class Menu implements Serializable {
      */
     @JsonIgnore
     @Column(nullable = false)
+    private int auth;
+
+    /**
+     *
+     */
+    @JsonIgnore
+    @Column(nullable = false)
     private int orderIndex;
 
     /**
@@ -138,6 +145,14 @@ public class Menu implements Serializable {
 
     public void setIcon(String icon) {
         this.icon = icon;
+    }
+
+    public int getAuth() {
+        return auth;
+    }
+
+    public void setAuth(int auth) {
+        this.auth = auth;
     }
 
     public int getOrderIndex() {

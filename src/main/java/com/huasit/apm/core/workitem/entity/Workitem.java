@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "VIEW_WORKITEM")
+@Table(name = "WORKITEM")
 public class Workitem {
 
     /**
@@ -14,7 +14,7 @@ public class Workitem {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private String id;
+    private Long id;
 
     /**
      *
@@ -33,6 +33,24 @@ public class Workitem {
      */
     @Column(nullable = false)
     private String stage;
+
+    /**
+     *
+     */
+    @Transient
+    private String auditNo;
+
+    /**
+     *
+     */
+    @Transient
+    private String auditUnit;
+
+    /**
+     *
+     */
+    @Transient
+    private String projectName;
 
     /**
      *
@@ -66,7 +84,7 @@ public class Workitem {
      *
      */
     @Transient
-    private String targetStr;
+    private Integer status;
 
     /**
      *
@@ -74,11 +92,23 @@ public class Workitem {
     @Transient
     private String stageStr;
 
-    public String getId() {
+    /**
+     *
+     */
+    @Transient
+    private String targetStr;
+
+    /**
+     *
+     */
+    @Transient
+    private String nextStageStr;
+
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -106,6 +136,22 @@ public class Workitem {
         this.stage = stage;
     }
 
+    public String getAuditNo() {
+        return auditNo;
+    }
+
+    public void setAuditNo(String auditNo) {
+        this.auditNo = auditNo;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
     public User getApprover() {
         return approver;
     }
@@ -130,12 +176,28 @@ public class Workitem {
         this.creator = creator;
     }
 
+    public String getAuditUnit() {
+        return auditUnit;
+    }
+
+    public void setAuditUnit(String auditUnit) {
+        this.auditUnit = auditUnit;
+    }
+
     public Date getCreateTime() {
         return createTime;
     }
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
+    }
+
+    public String getStageStr() {
+        return stageStr;
+    }
+
+    public void setStageStr(String stageStr) {
+        this.stageStr = stageStr;
     }
 
     public String getTargetStr() {
@@ -146,11 +208,19 @@ public class Workitem {
         this.targetStr = targetStr;
     }
 
-    public String getStageStr() {
-        return stageStr;
+    public String getNextStageStr() {
+        return nextStageStr;
     }
 
-    public void setStageStr(String stageStr) {
-        this.stageStr = stageStr;
+    public void setNextStageStr(String nextStageStr) {
+        this.nextStageStr = nextStageStr;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 }

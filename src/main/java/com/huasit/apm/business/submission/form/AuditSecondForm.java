@@ -12,6 +12,11 @@ public class AuditSecondForm {
     /**
      *
      */
+    private Long workitemId;
+
+    /**
+     *
+     */
     private Long targetId;
 
     /**
@@ -23,6 +28,11 @@ public class AuditSecondForm {
      *
      */
     private String comment;
+
+    /**
+     *
+     */
+    private String auditSecondNote;
 
     /**
      *
@@ -79,6 +89,14 @@ public class AuditSecondForm {
         this.auditSecondFiles = auditSecondFiles;
     }
 
+    public String getAuditSecondNote() {
+        return auditSecondNote;
+    }
+
+    public void setAuditSecondNote(String auditSecondNote) {
+        this.auditSecondNote = auditSecondNote;
+    }
+
     public String getAuditNote() {
         return auditNote;
     }
@@ -101,5 +119,13 @@ public class AuditSecondForm {
 
     public void setAuditSecondSubRatio(String auditSecondSubRatio) {
         this.auditSecondSubRatio = auditSecondSubRatio;
+    }
+
+    public Long getWorkitemId() {
+        return workitemId;
+    }
+
+    public void setWorkitemId(Long workitemId) {
+        this.workitemId = workitemId;
     }
 }

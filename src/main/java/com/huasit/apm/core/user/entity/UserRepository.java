@@ -8,6 +8,7 @@ import org.springframework.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -24,31 +25,49 @@ public interface UserRepository extends CrudRepository<User, Long>, JpaSpecifica
     /**
      *
      */
-    @Query("from User where username=?1")
+    @Query("from User where state=0 and username=?1")
     User findByUsername(String username);
 
     /**
      *
      */
-    @Query("from User where del=false and username=?1")
+    @Query("from User where state=0 and username=?1")
     User findLoginUserByUsername(String username);
 
     /**
      *
      */
-    @Query("from User where del=false and username=?1 and password=?2")
+    @Query("from User where state=0 and username=?1 and password=?2")
     User findLoginUserByUsernameAndPassword(String username, String password);
 
     /**
      *
      */
-    @Query("from User where del=false and id in (select userId from UserToken where enable=true and token=?1)")
+    @Query("from User where state=0 and id in (select userId from UserToken where enable=true and token=?1)")
     User findLoginUserByToken(String token);
+    /**
+     *
+     */
+    @Modifying
+    @Query("update User set password=:password,modifyId=:modifyId,modifyTime=:modifyTime where id=:id")
+    void updatePassword(@Param("id") Long id, @Param("password") String password, @Param("modifyId") Long modifyId, @Param("modifyTime") Date modifyTime);
 
     /**
      *
      */
     @Modifying
-    @Query("update User set del=:del,modifyId=:modifyId,modifyTime=:modifyTime where id=:id")
-    void updateDel(@Param("id") Long id, @Param("del") boolean del, @Param("modifyId") Long modifyId, @Param("modifyTime") Date modifyTime);
+    @Query("update User set state=:state,modifyId=:modifyId,modifyTime=:modifyTime where id=:id")
+    void updateState(@Param("id") Long id, @Param("state") User.State state, @Param("modifyId") Long modifyId, @Param("modifyTime") Date modifyTime);
+
+    /**
+     *
+     */
+    @Query("from User where state=0 and thirdparty.id=?1")
+    List<User> findByThirdpartyId(Long thirdpartyId);
+
+    /**
+     *
+     */
+    @Query(value="select a.user_code,a.dept_code,b.type,b.name from user_dept a left join dept b on a.dept_code=b.code",nativeQuery = true)
+    List<Object[]> findUserDept();
 }

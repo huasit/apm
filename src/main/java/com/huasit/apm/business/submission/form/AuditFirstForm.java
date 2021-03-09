@@ -12,6 +12,11 @@ public class AuditFirstForm {
     /**
      *
      */
+    private Long workitemId;
+
+    /**
+     *
+     */
     private Long targetId;
 
     /**
@@ -33,6 +38,11 @@ public class AuditFirstForm {
      *
      */
     private String viewDate2;
+
+    /**
+     *
+     */
+    private String qas;
 
     /**
      *
@@ -82,6 +92,14 @@ public class AuditFirstForm {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public String getQas() {
+        return qas;
+    }
+
+    public void setQas(String qas) {
+        this.qas = qas;
     }
 
     public BigDecimal getSubmissionPrice() {
@@ -170,5 +188,13 @@ public class AuditFirstForm {
 
     public void setViewPeoplesEntrustUnitIds2(String viewPeoplesEntrustUnitIds2) {
         this.viewPeoplesEntrustUnitIds2 = viewPeoplesEntrustUnitIds2;
+    }
+
+    public Long getWorkitemId() {
+        return workitemId;
+    }
+
+    public void setWorkitemId(Long workitemId) {
+        this.workitemId = workitemId;
     }
 }

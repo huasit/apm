@@ -2,8 +2,8 @@ package com.huasit.apm.business.submission.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.huasit.apm.business.thirdparty.entity.Thirdparty;
 import com.huasit.apm.core.user.entity.User;
-import com.huasit.apm.core.user.entity.UserLink;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -51,8 +51,8 @@ public class Submission implements Serializable {
      *
      */
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.REFRESH)
-    @JoinColumn(name = "assignedLinkId")
-    private UserLink assignedLink;
+    @JoinColumn(name = "thirdpartyId")
+    private Thirdparty thirdparty;
 
     /**
      *
@@ -304,6 +304,18 @@ public class Submission implements Serializable {
     private String auditNote;
     @Column
     private String auditSecondSubRatio;
+    @Column
+    private String memberIds;
+    @Column
+    private String projectPlace;
+    @Column
+    private String auditUnit;
+    @Column
+    private String projectSum;
+    @Column
+    private String qas;
+    @Column
+    private String auditSecondNote;
 
     /**
      *
@@ -350,7 +362,7 @@ public class Submission implements Serializable {
     /**
      *
      */
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @Fetch(FetchMode.SUBSELECT)
     @JoinColumn(name = "sid")
     private List<SubmissionArgueFile> argueFiles;
@@ -378,6 +390,18 @@ public class Submission implements Serializable {
     @Fetch(FetchMode.SUBSELECT)
     @JoinColumn(name = "sid")
     private List<SubmissionAuditSecond> auditSecondFiles;
+
+    /**
+     *
+     */
+    @Transient
+    private Long workitemId;
+
+    /**
+     *
+     */
+    @Transient
+    private List<Integer> statuses;
 
     public Long getId() {
         return id;
@@ -411,12 +435,20 @@ public class Submission implements Serializable {
         this.assigned = assigned;
     }
 
-    public UserLink getAssignedLink() {
-        return assignedLink;
+    public Thirdparty getThirdparty() {
+        return thirdparty;
     }
 
-    public void setAssignedLink(UserLink assignedLink) {
-        this.assignedLink = assignedLink;
+    public void setThirdparty(Thirdparty thirdparty) {
+        this.thirdparty = thirdparty;
+    }
+
+    public String getProjectSum() {
+        return projectSum;
+    }
+
+    public void setProjectSum(String projectSum) {
+        this.projectSum = projectSum;
     }
 
     public String getItemCode() {
@@ -441,6 +473,22 @@ public class Submission implements Serializable {
 
     public void setAuditNo(String auditNo) {
         this.auditNo = auditNo;
+    }
+
+    public String getQas() {
+        return qas;
+    }
+
+    public void setQas(String qas) {
+        this.qas = qas;
+    }
+
+    public String getAuditSecondNote() {
+        return auditSecondNote;
+    }
+
+    public void setAuditSecondNote(String auditSecondNote) {
+        this.auditSecondNote = auditSecondNote;
     }
 
     public String getContractNo() {
@@ -929,5 +977,45 @@ public class Submission implements Serializable {
 
     public void setAuditSecondFiles(List<SubmissionAuditSecond> auditSecondFiles) {
         this.auditSecondFiles = auditSecondFiles;
+    }
+
+    public String getMemberIds() {
+        return memberIds;
+    }
+
+    public void setMemberIds(String memberIds) {
+        this.memberIds = memberIds;
+    }
+
+    public Long getWorkitemId() {
+        return workitemId;
+    }
+
+    public void setWorkitemId(Long workitemId) {
+        this.workitemId = workitemId;
+    }
+
+    public String getProjectPlace() {
+        return projectPlace;
+    }
+
+    public void setProjectPlace(String projectPlace) {
+        this.projectPlace = projectPlace;
+    }
+
+    public String getAuditUnit() {
+        return auditUnit;
+    }
+
+    public void setAuditUnit(String auditUnit) {
+        this.auditUnit = auditUnit;
+    }
+
+    public List<Integer> getStatuses() {
+        return statuses;
+    }
+
+    public void setStatuses(List<Integer> statuses) {
+        this.statuses = statuses;
     }
 }

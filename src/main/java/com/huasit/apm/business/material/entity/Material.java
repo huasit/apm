@@ -1,7 +1,5 @@
 package com.huasit.apm.business.material.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
@@ -23,7 +21,6 @@ public class Material implements Serializable {
     /**
      *
      */
-    @JsonIgnore
     @Column(nullable = false)
     private boolean del;
 
@@ -38,6 +35,12 @@ public class Material implements Serializable {
      */
     @Column(nullable = false)
     private boolean required;
+
+    /**
+     *
+     */
+    @Column(nullable = false)
+    private String description;
 
     /**
      *
@@ -72,7 +75,7 @@ public class Material implements Serializable {
         this.id = id;
     }
 
-    public boolean getDel() {
+    public boolean isDel() {
         return del;
     }
 
@@ -94,6 +97,14 @@ public class Material implements Serializable {
 
     public void setRequired(boolean required) {
         this.required = required;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Long getModifyId() {

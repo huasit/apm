@@ -1,6 +1,16 @@
 package com.huasit.apm.core.user.service;
 
-import com.huasit.apm.core.user.entity.*;
+import com.huasit.apm.business.thirdparty.entity.ThirdpartyRepository;
+import com.huasit.apm.business.thirdparty.entity.UserLink;
+import com.huasit.apm.business.thirdparty.entity.UserLinkRepository;
+import com.huasit.apm.core.role.entity.Role;
+import com.huasit.apm.core.role.entity.RoleGroupUser;
+import com.huasit.apm.core.role.entity.RoleGroupUserRepository;
+import com.huasit.apm.core.role.entity.RoleRepository;
+import com.huasit.apm.core.user.entity.User;
+import com.huasit.apm.core.user.entity.UserRepository;
+import com.huasit.apm.core.user.entity.UserToken;
+import com.huasit.apm.core.user.entity.UserTokenRepository;
 import com.huasit.apm.system.exception.SystemException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -8,6 +18,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -30,7 +42,11 @@ public class UserService {
      *
      */
     public User getUserById(Long id) {
-        return this.userRepository.findUserById(id);
+        User user = this.userRepository.findUserById(id);
+        if(user != null) {
+            user.setRoleGroups(this.roleGroupUserRepository.findByUserId(id));
+        }
+        return user;
     }
 
     /**
@@ -49,13 +65,17 @@ public class UserService {
             @Override
             public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
                 List<Predicate> predicates = new ArrayList<>();
-                predicates.add(cb.equal(root.get("del").as(boolean.class), false));
-                predicates.add(cb.equal(root.get("thirdParty").as(boolean.class), form.isThirdParty()));
                 if (form.getName() != null && !"".equals(form.getName())) {
                     predicates.add(cb.like(root.get("name").as(String.class), "%"+  form.getName().trim() + "%"));
                 }
-                if(!loginUser.isAdmin()) {
-                    predicates.add(cb.equal(root.get("id").as(Long.class), loginUser.getId()));
+                if(form.getThirdpartyId() != null) {
+                    predicates.add(cb.equal(root.get("thirdparty").get("id").as(Long.class), form.getThirdpartyId()));
+                }
+                if(!CollectionUtils.isEmpty(form.getTypes())) {
+                    predicates.add((root.get("type").as(User.Type.class).in(form.getTypes())));
+                }
+                if(!CollectionUtils.isEmpty(form.getStates())) {
+                    predicates.add((root.get("state").as(User.State.class).in(form.getStates())));
                 }
                 if (predicates.size() > 0) {
                     Predicate[] array = new Predicate[predicates.size()];
@@ -69,17 +89,26 @@ public class UserService {
     /**
      *
      */
+    public List<User> getByThirdpartyId(Long thirdpartyId, User loginUser) {
+        return this.userRepository.findByThirdpartyId(thirdpartyId);
+    }
+
+    /**
+     *
+     */
     public void save(User form, User loginUser) {
         form.setModifyId(loginUser.getId());
         form.setModifyTime(new Date());
         if (form.getId() == null) {
-            form.setThirdParty(true);
             form.setCreatorId(form.getModifyId());
             form.setCreateTime(form.getModifyTime());
         } else {
             User db = this.userRepository.findUserById(form.getId());
-            if (db == null || db.isDel()) {
+            if (db == null) {
                 throw new SystemException(30000);
+            }
+            if(StringUtils.isEmpty(form.getPassword())) {
+                form.setPassword(db.getPassword());
             }
             form.setCreatorId(db.getCreatorId());
             form.setCreateTime(db.getCreateTime());
@@ -88,14 +117,33 @@ public class UserService {
         if(check != null && !check.getId().equals(form.getId())) {
             throw new SystemException(20100);
         }
+        if(form.getThirdparty() != null && form.getThirdparty().getId() != null) {
+            form.setThirdparty(this.thirdpartyRepository.findThirdpartyById(form.getThirdparty().getId()));
+        } else {
+            form.setThirdparty(null);
+        }
         this.userRepository.save(form);
+        if(form.getRoleGroups() != null && form.getRoleGroups().size() > 0) {
+            this.roleGroupUserRepository.deleteByUserId(form.getId());
+            for(RoleGroupUser gu : form.getRoleGroups()) {
+                gu.setUserId(form.getId());
+            }
+            this.roleGroupUserRepository.saveAll(form.getRoleGroups());
+        }
     }
 
     /**
      *
      */
-    public void delete(Long id, User loginUser) {
-        this.userRepository.updateDel(id, true, loginUser.getId(), new Date());
+    public void updatePassword(String password, User loginUser) {
+        this.userRepository.updatePassword(loginUser.getId(), password, loginUser.getId(), new Date());
+    }
+
+    /**
+     *
+     */
+    public void updateState(Long id,User.State state, User loginUser) {
+        this.userRepository.updateState(id, state, loginUser.getId(), new Date());
     }
 
     /**
@@ -136,8 +184,21 @@ public class UserService {
     /**
      *
      */
+    public List<Role> getUserRoles(Long userId) {
+        return this.roleRepository.findByUserId(userId);
+    }
+
+    /**
+     *
+     */
     @Autowired
     UserRepository userRepository;
+
+    /**
+     *
+     */
+    @Autowired
+    RoleRepository roleRepository;
 
     /**
      *
@@ -150,4 +211,16 @@ public class UserService {
      */
     @Autowired
     UserTokenRepository userTokenRepository;
+
+    /**
+     *
+     */
+    @Autowired
+    ThirdpartyRepository thirdpartyRepository;
+
+    /**
+     *
+     */
+    @Autowired
+    RoleGroupUserRepository roleGroupUserRepository;
 }

@@ -5,10 +5,17 @@ import com.huasit.apm.business.bid.entity.Bid;
 import com.huasit.apm.business.bid.form.BidAuditFirstForm;
 import com.huasit.apm.business.bid.form.BidAuditSecondForm;
 import com.huasit.apm.business.bid.service.BidService;
+import com.huasit.apm.business.construction.entity.Construction;
+import com.huasit.apm.business.construction.service.ConstructionService;
+import com.huasit.apm.business.submission.service.SubmissionService;
 import com.huasit.apm.core.comment.entity.Comment;
+import com.huasit.apm.core.flow.entity.Flow;
+import com.huasit.apm.core.flow.service.FlowService;
 import com.huasit.apm.core.user.entity.User;
 import com.huasit.apm.core.user.service.UserLoginService;
 import com.huasit.apm.core.user.service.UserService;
+import com.huasit.apm.system.util.ExcelUtil;
+import com.huasit.apm.system.util.WebUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -17,6 +24,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -48,6 +58,34 @@ public class BidController {
     /**
      *
      */
+    @GetMapping("/export/")
+    public void list(Bid form, Long assignedId, HttpServletRequest request, HttpServletResponse response) throws Exception {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        Page<Bid> list = this.bidService.list(form, assignedId, 1, 9999, loginUser);
+        Map<Integer, Flow> statusMap = this.flowService.getTargetStatusMap("bid");
+        Map<Long, Construction> constructionMap = this.constructionService.getMap();
+        String[] titles = new String[]{"审计状态", "审计编号", "工程项目", "立项代码", "中介机构", "审计方式", "送审金额", "审定金额"};
+        List<Object[]> datas = new ArrayList<>();
+        if (list.hasContent()) {
+            for (Bid data : list.getContent()) {
+                Object[] s = new Object[titles.length];
+                s[0] = ExcelUtil.value(statusMap.get(data.getStatus()).getStageStr());
+                s[1] = ExcelUtil.value(data.getAuditNo());
+                s[2] = ExcelUtil.value(data.getProjectName());
+                s[3] = ExcelUtil.value(data.getItemCode());
+                s[4] = ExcelUtil.value(data.getAssigned() == null ? "" : data.getAssigned().getName());
+                s[5] = ExcelUtil.value(data.getAuditType());
+                s[6] = ExcelUtil.value(data.getSubmissionPrice());
+                s[7] = ExcelUtil.value(data.getSecondAuditPrice());
+                datas.add(s);
+            }
+        }
+        WebUtil.excelExport("export", ExcelUtil.export(titles, datas), request, response);
+    }
+
+    /**
+     *
+     */
     @ResponseBody
     @PostMapping("/addOrUpdate/")
     public ResponseEntity<Map<String, Object>> addOrUpdate(@RequestBody Bid form, HttpServletRequest request) {
@@ -68,6 +106,28 @@ public class BidController {
     }
 
     /**
+     * 提交
+     */
+    @ResponseBody
+    @PostMapping("/start/")
+    public ResponseEntity<Map<String, Object>> start(@RequestBody Bid form, HttpServletRequest request) {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.bidService.start(form, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
+
+    /**
+     * 退回重新提交
+     */
+    @ResponseBody
+    @PostMapping("/restart/")
+    public ResponseEntity<Map<String, Object>> restart(@RequestBody Bid form, HttpServletRequest request) {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.bidService.restart(form, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
+
+    /**
      * 审核人审核
      */
     @ResponseBody
@@ -83,9 +143,9 @@ public class BidController {
      */
     @ResponseBody
     @PostMapping("/project/approves/")
-    public ResponseEntity<Map<String, Object>> projectApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String comment, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> projectApproves(@RequestBody List<Comment> comments, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.bidService.projectApproves(targetIds, type, comment, loginUser);
+        this.bidService.projectApproves(comments, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -94,9 +154,20 @@ public class BidController {
      */
     @ResponseBody
     @PostMapping("/distribution/approves/")
-    public ResponseEntity<Map<String, Object>> distributionApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String auditType, Long assignedId, Long assignedLinkId, String comment, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> distributionApproves(@RequestBody List<Comment> comments, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.bidService.distributionApproves(targetIds, type, auditType, assignedId, assignedLinkId, comment, loginUser);
+        this.bidService.distributionApproves(comments, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
+
+    /**
+     * 组长审批
+     */
+    @ResponseBody
+    @PostMapping("/memberl/approve/")
+    public ResponseEntity<Map<String, Object>> memberlApprove(@RequestBody Comment comment, HttpServletRequest request) {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.bidService.memberlApprove(comment, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -105,9 +176,9 @@ public class BidController {
      */
     @ResponseBody
     @PostMapping("/check/approves/")
-    public ResponseEntity<Map<String, Object>> checkApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String comment, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> checkApproves(@RequestBody List<Comment> comments, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.bidService.checkApproves(targetIds, type, comment, loginUser);
+        this.bidService.checkApproves(comments, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -138,9 +209,9 @@ public class BidController {
      */
     @ResponseBody
     @PostMapping("/complete/approves/")
-    public ResponseEntity<Map<String, Object>> completeApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String comment, HttpServletRequest request) throws Exception {
+    public ResponseEntity<Map<String, Object>> completeApproves(@RequestBody List<Comment> comments, HttpServletRequest request) throws Exception {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.bidService.completeApproves(targetIds, type, comment, loginUser);
+        this.bidService.completeApproves(comments, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -149,9 +220,9 @@ public class BidController {
      */
     @ResponseBody
     @PostMapping("/filed/approves/")
-    public ResponseEntity<Map<String, Object>> filedApproves(@RequestParam("targetIds") Long[] targetIds, @RequestParam("type") int type, String comment, HttpServletRequest request) throws Exception {
+    public ResponseEntity<Map<String, Object>> filedApproves(@RequestBody List<Comment> comments, HttpServletRequest request) throws Exception {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.bidService.filedApproves(targetIds, type, comment, loginUser);
+        this.bidService.filedApproves(comments, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -171,5 +242,23 @@ public class BidController {
      *
      */
     @Autowired
+    FlowService flowService;
+
+    /**
+     *
+     */
+    @Autowired
     UserLoginService userLoginService;
+
+    /**
+     *
+     */
+    @Autowired
+    SubmissionService submissionService;
+
+    /**
+     *
+     */
+    @Autowired
+    ConstructionService constructionService;
 }

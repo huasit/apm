@@ -8,12 +8,19 @@ import org.springframework.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
 import java.util.Date;
+import java.util.List;
 
 /**
  *
  */
 @Transactional
 public interface RoleRepository extends CrudRepository<Role, Long>, JpaSpecificationExecutor<Role>  {
+
+    /**
+     *
+     */
+    @Query("from Role where del=false and id in (select roleId from RoleGroupRole where groupId in (select id from RoleGroup where del=false) and groupId in (select groupId from RoleGroupUser where userId=?1))")
+    List<Role> findByUserId(Long userId);
 
     /**
      *
@@ -30,7 +37,7 @@ public interface RoleRepository extends CrudRepository<Role, Long>, JpaSpecifica
     /**
      *
      */
-    @Query("from Role r where r.del=false and r.rkey=:rkey and exists (select 1 from RoleUser ru where ru.user.id=:userId and r.id=ru.rid)")
+    @Query("from Role r where r.del=false and r.rkey=:rkey and exists (select 1 from RoleGroupUser ru where ru.userId=:userId and ru.groupId in (select groupId from RoleGroupRole where roleId=r.id) and ru.groupId in (select id from RoleGroup where del=false))")
     Role checkUserHasRole(@Param("userId") Long userId, @Param("rkey") String rkey);
 
     /**

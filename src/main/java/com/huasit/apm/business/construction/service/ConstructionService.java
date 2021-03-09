@@ -14,9 +14,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class ConstructionService {
@@ -31,7 +29,6 @@ public class ConstructionService {
             public Predicate toPredicate(Root<Construction> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
                 List<Predicate> predicates = new ArrayList<>();
                 predicates.add(cb.equal(root.get("del").as(boolean.class), false));
-                predicates.add(cb.equal(root.get("creatorId").as(Long.class), loginUser.getId()));
                 if (predicates.size() > 0) {
                     Predicate[] array = new Predicate[predicates.size()];
                     query.where(predicates.toArray(array));
@@ -85,6 +82,21 @@ public class ConstructionService {
         construction.setModifyId(loginUser.getId());
         construction.setModifyTime(new Date());
         this.constructionRepository.save(construction);
+    }
+
+    /**
+     *
+     */
+    public Map<Long,Construction> getMap() {
+        Map<Long, Construction> map = new HashMap<>();
+        List<Construction> list = this.constructionRepository.findAll();
+        if(list == null) {
+            return map;
+        }
+        for(Construction c : list) {
+            map.put(c.getId(), c);
+        }
+        return map;
     }
 
     /**

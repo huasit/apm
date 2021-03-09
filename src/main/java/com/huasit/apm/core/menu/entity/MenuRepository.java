@@ -17,6 +17,12 @@ public interface MenuRepository extends CrudRepository<Menu, Long>, JpaSpecifica
     /**
      *
      */
+    @Query("from Menu where del=false and auth in (?1) order by orderIndex asc")
+    List<Menu> findByAuth(List<Integer> auths);
+
+    /**
+     *
+     */
     @Query("from Menu where del=false order by orderIndex asc")
     List<Menu> findAll();
 

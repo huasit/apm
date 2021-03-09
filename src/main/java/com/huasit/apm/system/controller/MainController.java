@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -61,11 +60,6 @@ public class MainController {
         if (assertion != null) {
             AttributePrincipal principal = assertion.getPrincipal();
             this.userLoginService.userLoginByThirdParty(principal, request, response);
-            Map<String, Object> attributes = principal.getAttributes();
-            BASE64Decoder decoder = new BASE64Decoder();
-            for(String key : attributes.keySet()) {
-                System.out.println(key + ":" + new String(decoder.decodeBuffer(attributes.get(key).toString()), "UTF-8"));
-            }
         }
         response.sendRedirect("/#/index/");
     }

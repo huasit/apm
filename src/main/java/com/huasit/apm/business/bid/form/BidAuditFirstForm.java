@@ -4,10 +4,17 @@ import com.huasit.apm.business.bid.entity.BidAuditFirst;
 import com.huasit.apm.core.comment.entity.Comment;
 
 import javax.persistence.Column;
+import javax.persistence.Transient;
 import java.math.BigDecimal;
 import java.util.List;
 
 public class BidAuditFirstForm {
+
+    /**
+     *
+     */
+    @Transient
+    private Long workitemId;
 
     /**
      *
@@ -23,6 +30,11 @@ public class BidAuditFirstForm {
      *
      */
     private String comment;
+
+    /**
+     *
+     */
+    private String qas;
 
     /**
      *
@@ -76,6 +88,14 @@ public class BidAuditFirstForm {
         this.submissionPrice = submissionPrice;
     }
 
+    public String getQas() {
+        return qas;
+    }
+
+    public void setQas(String qas) {
+        this.qas = qas;
+    }
+
     public BigDecimal getFirstAuditPrice() {
         return firstAuditPrice;
     }
@@ -106,5 +126,13 @@ public class BidAuditFirstForm {
 
     public void setAuditFirstSubRatio(String auditFirstSubRatio) {
         this.auditFirstSubRatio = auditFirstSubRatio;
+    }
+
+    public Long getWorkitemId() {
+        return workitemId;
+    }
+
+    public void setWorkitemId(Long workitemId) {
+        this.workitemId = workitemId;
     }
 }

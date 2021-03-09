@@ -2,6 +2,7 @@ package com.huasit.apm.core.menu.service;
 
 import com.huasit.apm.core.menu.entity.Menu;
 import com.huasit.apm.core.menu.entity.MenuRepository;
+import com.huasit.apm.core.user.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,8 +15,21 @@ public class MenuService {
     /**
      *
      */
-    public List<Menu> getUserMenuTree(Long userId) {
-        List<Menu> menus = this.menuRepository.findAll();
+    public List<Menu> getUserMenuTree(User user) {
+        List<Integer> auths = new ArrayList<>();
+        if (user.isAdmin()) {
+            auths.add(0);
+            auths.add(1);
+            auths.add(2);
+            auths.add(3);
+        } else if (user.getType() == User.Type.THIRDPARTY) {
+            auths.add(0);
+            auths.add(3);
+        } else {
+            auths.add(0);
+            auths.add(2);
+        }
+        List<Menu> menus = this.menuRepository.findByAuth(auths);
         if (menus == null) {
             return null;
         }
@@ -37,7 +51,7 @@ public class MenuService {
             return null;
         }
         Menu menu = this.menuRepository.findMenuById(parentId);
-        if(menu == null) {
+        if (menu == null) {
             return null;
         }
         return menu.getChildrens();

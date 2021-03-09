@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +54,17 @@ public class UserController {
      *
      */
     @ResponseBody
+    @GetMapping("/list/thirdparty/")
+    public ResponseEntity<Map<String, Object>> list(Long thirdpartyId, HttpServletRequest request) {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        List<User> list = this.userService.getByThirdpartyId(thirdpartyId,loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("list", list), HttpStatus.OK);
+    }
+
+    /**
+     *
+     */
+    @ResponseBody
     @RequestMapping("/addOrUpdate/")
     public ResponseEntity<Map<String, Object>> addOrUpdate(@RequestBody User form, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
@@ -62,18 +74,28 @@ public class UserController {
         this.userService.save(form, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("user", form), HttpStatus.OK);
     }
+    /**
+     *
+     */
+    @ResponseBody
+    @RequestMapping("/updatePassword/")
+    public ResponseEntity<Map<String, Object>> updatePassword(@RequestParam("password") String password, HttpServletRequest request) {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.userService.updatePassword(password,loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
 
     /**
      *
      */
     @ResponseBody
-    @RequestMapping("/delete/")
-    public ResponseEntity<Map<String, Object>> delete(@RequestParam("id") Long id, HttpServletRequest request) {
+    @RequestMapping("/updateState/")
+    public ResponseEntity<Map<String, Object>> delete(@RequestParam("id") Long id,User.State state, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
         if(!loginUser.isAdmin()) {
             throw new SystemException(10002);
         }
-        this.userService.delete(id, loginUser);
+        this.userService.updateState(id, state,loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 

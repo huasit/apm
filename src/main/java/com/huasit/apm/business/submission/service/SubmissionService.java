@@ -2,18 +2,21 @@ package com.huasit.apm.business.submission.service;
 
 import com.huasit.apm.business.submission.entity.*;
 import com.huasit.apm.business.submission.form.*;
+import com.huasit.apm.business.thirdparty.entity.Thirdparty;
+import com.huasit.apm.business.thirdparty.service.ThirdpartyService;
 import com.huasit.apm.core.comment.entity.Comment;
 import com.huasit.apm.core.comment.entity.CommentRepository;
 import com.huasit.apm.core.file.entity.File;
 import com.huasit.apm.core.file.service.FileService;
+import com.huasit.apm.core.flow.entity.Flow;
+import com.huasit.apm.core.flow.service.FlowService;
 import com.huasit.apm.core.role.service.RoleService;
 import com.huasit.apm.core.user.entity.User;
-import com.huasit.apm.core.user.entity.UserLink;
 import com.huasit.apm.core.user.service.UserService;
+import com.huasit.apm.core.workitem.service.WorkitemService;
 import com.huasit.apm.system.exception.SystemException;
 import com.huasit.apm.system.util.DataUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.ApplicationArguments;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -38,6 +41,7 @@ import java.util.List;
 public class SubmissionService {
 
     // Status
+    // -30 被审计处退回
     // -20 被退回
     // -10 保存/未送审
     // 10 待审核/已提交
@@ -222,10 +226,14 @@ public class SubmissionService {
                     u.setId(assignedId);
                     predicates.add(cb.equal(root.get("assigned").as(User.class), u));
                 }
-                if (form.getStatus() != 0) {
-                    predicates.add(cb.equal(root.get("status").as(int.class), form.getStatus()));
+                if (form.getStatuses() != null && !form.getStatuses().contains(0)) {
+                    predicates.add(root.get("status").in(form.getStatuses()));
                 }
-                if (!viewAll) {
+                if (loginUser.getId().equals(form.getCreatorId())) {
+                    predicates.add(cb.equal(root.get("creatorId").as(Long.class), loginUser.getId()));
+                } else if (!viewAll && new Long(-1).equals(form.getCreatorId())) {
+                    predicates.add(cb.equal(root.get("creatorId").as(Long.class), -1L));
+                }else if (!viewAll) {
                     predicates.add(cb.equal(root.get("creatorId").as(Long.class), loginUser.getId()));
                 }
                 predicates.add(cb.equal(root.get("del").as(boolean.class), false));
@@ -238,16 +246,13 @@ public class SubmissionService {
         }, pageRequest);
     }
 
-
     /**
      *
      */
     public void save(Submission form, User loginUser) {
-        if (form.getStatus() != -10 && form.getStatus() != 10) {
-            throw new SystemException(30000);
-        }
+        form.setStatus(-10);
         form.setAssigned(null);
-        form.setAssignedLink(null);
+        form.setThirdparty(null);
         form.setModifyId(loginUser.getId());
         form.setModifyTime(new Date());
         if (form.getId() == null) {
@@ -269,6 +274,54 @@ public class SubmissionService {
     /**
      *
      */
+    public void start(Submission form, User loginUser) {
+        Flow current = this.flowService.getStartNode(Submission.class);
+        form.setStatus(current.getNextAgree().getStatus());
+        form.setAssigned(null);
+        form.setThirdparty(null);
+        form.setModifyId(loginUser.getId());
+        form.setModifyTime(new Date());
+        if (form.getId() == null) {
+            form.setAuditNo(null);
+            form.setCreatorId(form.getModifyId());
+            form.setCreateTime(form.getModifyTime());
+        } else {
+            Submission db = this.submissionRepository.findSubmissionById(form.getId());
+            if (db == null || db.isDel()) {
+                throw new SystemException(30000);
+            }
+            form.setAuditNo(db.getAuditNo());
+            form.setCreatorId(db.getCreatorId());
+            form.setCreateTime(db.getCreateTime());
+        }
+        this.submissionRepository.save(form);
+        this.workitemService.createWorkitemWithApply(current.getNextAgree().getStage(), "submission_project_approver", form, loginUser);
+    }
+
+    /**
+     *
+     */
+    public void restart(Submission form, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("reject", Submission.class);
+        Submission submission = this.submissionRepository.findSubmissionById(form.getId());
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
+            throw new SystemException(30000);
+        }
+        form.setStatus(current.getNextAgree().getStatus());
+        form.setAssigned(null);
+        form.setThirdparty(null);
+        form.setModifyId(loginUser.getId());
+        form.setModifyTime(new Date());
+        form.setAuditNo(submission.getAuditNo());
+        form.setCreatorId(submission.getCreatorId());
+        form.setCreateTime(submission.getCreateTime());
+        this.submissionRepository.save(form);
+        this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), "submission_project_approver", form, loginUser);
+    }
+
+    /**
+     *
+     */
     public void delete(Long id, User loginUser) {
         this.submissionRepository.updateDel(id, true, loginUser.getId(), new Date());
     }
@@ -277,32 +330,37 @@ public class SubmissionService {
      *
      */
     public void projectApprove(Comment comment, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("project", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
-        if (submission == null || submission.getStatus() != 10) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
             throw new SystemException(30000);
         }
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("project");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
-        if (comment.getType() == Comment.CommentType.ALLOW && submission.getAuditNo() == null) {
-            this.submissionRepository.updateStatusAndAuditNo(comment.getTargetId(), 20, comment.getAuditNo(), loginUser.getId(), new Date());
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), "submission_distribution_approver", submission, loginUser);
+            if(submission.getAuditNo() == null) {
+                this.submissionRepository.updateStatusAndAuditNo(comment.getTargetId(), current.getNextAgree().getStatus(), this.getAuditNo(), loginUser.getId(), new Date());
+            } else{
+                this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextAgree().getStatus(),loginUser.getId(), new Date());
+            }
         } else {
-            this.submissionRepository.updateStatusAndAuditNo(comment.getTargetId(), comment.getType() == Comment.CommentType.ALLOW ? 20 : -20, comment.getAuditNo(), loginUser.getId(), new Date());
-            //this.submissionRepository.updateStatus(comment.getTargetId(), comment.getType() == Comment.CommentType.ALLOW ? 20 : -20, loginUser.getId(), new Date());
+            this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextReject().getStage(), new Long[]{submission.getCreatorId()}, submission, loginUser);
         }
     }
 
     /**
      *
      */
-    public void projectApproves(Long[] targetIds, int type, String commentContent, User loginUser) {
-        for (Long targetId : targetIds) {
-            Comment comment = new Comment();
-            comment.setTargetId(targetId);
-            comment.setContent(commentContent);
-            comment.setType(Comment.CommentType.get(type));
+    public void projectApproves(List<Comment> comments, User loginUser) {
+        for (Comment comment : comments) {
             this.projectApprove(comment, loginUser);
         }
     }
@@ -310,38 +368,64 @@ public class SubmissionService {
     /**
      *
      */
-    public void distributionApprove(Comment comment, String auditType, Long assignedId, Long assignedLinkId, User loginUser) {
+    public void distributionApprove(Comment comment, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("distribution", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
-        if (submission == null || submission.getStatus() != 20) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
             throw new SystemException(30000);
         }
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("distribution");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
         if (comment.getType() == Comment.CommentType.ALLOW) {
-            User assigned = this.userService.getUserById(assignedId);
-            UserLink assignedLink = null;
-            if(assignedLinkId != null) {
-                assignedLink = this.userService.getUserLinkById(assignedLinkId);
+            User assigned = this.userService.getUserById(comment.getAssignedId());
+            Thirdparty thirdparty = null;
+            if (comment.getThirdpartyId() != null) {
+                thirdparty = this.thirdpartyService.getThirdpartyById(comment.getThirdpartyId());
             }
-            this.submissionRepository.updateStatusAndAssigned(comment.getTargetId(), 30, assigned,assignedLink, auditType, loginUser.getId(), new Date());
+            this.submissionRepository.updateStatusAndAssigned(comment.getTargetId(), current.getNextAgree().getStatus(), assigned, thirdparty, comment.getAuditType(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), new Long[]{assigned.getId()}, submission, loginUser);
         } else {
-            this.submissionRepository.updateStatus(comment.getTargetId(), -20, loginUser.getId(), new Date());
+            this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextReject().getStage(), new Long[]{submission.getCreatorId()}, submission, loginUser);
         }
     }
 
     /**
      *
      */
-    public void distributionApproves(Long[] targetIds, int type, String auditType, Long assignedId, Long assignedLinkId, String commentContent, User loginUser) {
-        for (Long targetId : targetIds) {
-            Comment comment = new Comment();
-            comment.setTargetId(targetId);
-            comment.setContent(commentContent);
-            comment.setType(Comment.CommentType.get(type));
-            this.distributionApprove(comment, auditType, assignedId,assignedLinkId, loginUser);
+    public void distributionApproves(List<Comment> comments, User loginUser) {
+        for (Comment comment : comments) {
+            this.distributionApprove(comment, loginUser);
+        }
+    }
+
+    /**
+     *
+     */
+    public void memberlApprove(Comment comment, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("memberl", Submission.class);
+        Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
+            throw new SystemException(30000);
+        }
+        comment.setTarget(current.getTarget());
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
+        this.commentRepository.save(comment);
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            this.submissionRepository.updateStatusAndMemberIds(comment.getTargetId(), current.getNextAgree().getStatus(), comment.getMemberIds(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), "submission_check_approver", submission, loginUser);
+        } else {
+            this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextReject().getStage(), "submission_distribution_approver", submission, loginUser);
         }
     }
 
@@ -349,31 +433,32 @@ public class SubmissionService {
      *
      */
     public void checkApprove(Comment comment, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("check", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
-        if (submission == null || submission.getStatus() != 30) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
             throw new SystemException(30000);
         }
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("check");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
         if (comment.getType() == Comment.CommentType.ALLOW) {
-            this.submissionRepository.updateStatus(comment.getTargetId(), 40, loginUser.getId(), new Date());
+            this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), "submission_survey_prepare_approver", submission, loginUser);
         } else {
-            this.submissionRepository.updateStatus(comment.getTargetId(), -20, loginUser.getId(), new Date());
+            this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextReject().getStage(), new Long[]{submission.getAssigned().getId()}, submission, loginUser);
         }
     }
 
     /**
      *
      */
-    public void checkApproves(Long[] targetIds, int type, String commentContent, User loginUser) {
-        for (Long targetId : targetIds) {
-            Comment comment = new Comment();
-            comment.setTargetId(targetId);
-            comment.setContent(commentContent);
-            comment.setType(Comment.CommentType.get(type));
+    public void checkApproves(List<Comment> comments, User loginUser) {
+        for (Comment comment : comments) {
             this.checkApprove(comment, loginUser);
         }
     }
@@ -381,39 +466,46 @@ public class SubmissionService {
     /**
      *
      */
-    public void surveyPrepareApprove(Comment comment, String prepareViewDate, User loginUser) throws ParseException {
+    public void surveyPrepareApprove(Comment comment, User loginUser) throws ParseException {
+        Flow current = this.flowService.getCurrentNode("survey_prepare", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
-        if (submission == null || submission.getStatus() != 40) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
             throw new SystemException(30000);
         }
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("survey_prepare");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        this.submissionRepository.updateWhileSurveyPrepare(comment.getTargetId(), 50, sdf.parse(prepareViewDate), loginUser.getId(), new Date());
+        this.submissionRepository.updateWhileSurveyPrepare(comment.getTargetId(), current.getNextAgree().getStatus(), sdf.parse(comment.getPrepareViewDate()), loginUser.getId(), new Date());
+        this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), new Long[]{submission.getAssigned().getId()}, submission, loginUser);
     }
 
     /**
      *
      */
     public void surveySceneApprove(SurveySceneForm form, User loginUser) throws ParseException {
+        Flow current = this.flowService.getCurrentNode("survey_scene", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(form.getTargetId());
-        if (submission == null || submission.getStatus() != 50) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus()) || (form.getStatus() != current.getNextAgree().getStatus() && form.getStatus() != current.getNextReject().getStatus())) {
             throw new SystemException(30000);
         }
         Comment comment = new Comment();
         comment.setTargetId(form.getTargetId());
         comment.setContent(form.getComment());
         comment.setType(form.getType());
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("survey_scene");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
-        submission.setStatus(60);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        submission.setStatus(form.getStatus());
         submission.setViewDate(sdf.parse(form.getViewDate()));
         submission.setSurveyFiles(form.getSurveyFiles());
         submission.setModifyId(loginUser.getId());
@@ -423,80 +515,121 @@ public class SubmissionService {
         submission.setViewPeoplesConstructUnitIds(form.getViewPeoplesConstructUnitIds());
         submission.setViewPeoplesEntrustUnitIds(form.getViewPeoplesEntrustUnitIds());
         this.submissionRepository.save(submission);
+        if (form.getStatus() == current.getNextAgree().getStatus()) {
+            this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), new Long[]{submission.getAssigned().getId()}, submission, loginUser);
+        } else if (form.getStatus() == current.getNextReject().getStatus()) {
+            this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextReject().getStage(), new Long[]{submission.getAssigned().getId()}, submission, loginUser);
+        }
     }
 
     /**
      *
      */
     public void argueApprove(ArgueForm form, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("argue", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(form.getTargetId());
-        if (submission == null || submission.getStatus() != 60) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
             throw new SystemException(30000);
         }
         Comment comment = new Comment();
         comment.setTargetId(form.getTargetId());
         comment.setContent(form.getComment());
         comment.setType(form.getType());
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("argue");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
-        if (comment.getType() == Comment.CommentType.ALLOW) {
-            submission.setStatus(70);
-        } else {
-            submission.setStatus(-30);
-        }
         submission.setArgueFiles(form.getArgueFiles());
         submission.setModifyId(loginUser.getId());
         submission.setModifyTime(new Date());
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            submission.setStatus(current.getNextAgree().getStatus());
+            this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), new Long[]{submission.getAssigned().getId()}, submission, loginUser);
+        } else {
+            submission.setStatus(current.getNextReject().getStatus());
+            this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextReject().getStage(), "submission_audit_dept_approver", submission, loginUser);
+        }
         this.submissionRepository.save(submission);
     }
 
+    /**
+     *
+     */
+    public void auditDeptApprove(Comment comment, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("audit_dept", Submission.class);
+        Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
+            throw new SystemException(30000);
+        }
+        comment.setTarget(current.getTarget());
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
+        this.commentRepository.save(comment);
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), new Long[]{submission.getAssigned().getId()}, submission, loginUser);
+        } else {
+            this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextReject().getStage(), new Long[]{submission.getCreatorId()}, submission, loginUser);
+        }
+    }
 
     /**
      *
      */
     public void argueRejectApprove(ArgueRejectForm form, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("argue_reject", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(form.getTargetId());
-        if (submission == null || submission.getStatus() != -30) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
             throw new SystemException(30000);
         }
         Comment comment = new Comment();
         comment.setTargetId(form.getTargetId());
         comment.setContent(form.getComment());
         comment.setType(form.getType());
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("argue");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
-        submission.setStatus(60);
+        submission.setStatus(current.getNextAgree().getStatus());
         submission.setSupplementFiles(form.getSupplementFiles());
         submission.setModifyId(loginUser.getId());
         submission.setModifyTime(new Date());
         this.submissionRepository.save(submission);
+        this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), "submission_audit_dept_approver", submission, loginUser);
     }
 
     /**
      *
      */
     public void auditFirstApprove(AuditFirstForm form, User loginUser) throws ParseException {
+        Flow current = this.flowService.getCurrentNode("audit_first", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(form.getTargetId());
-        if (submission == null || submission.getStatus() != 70) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
             throw new SystemException(30000);
         }
         Comment comment = new Comment();
         comment.setTargetId(form.getTargetId());
         comment.setContent(form.getComment());
         comment.setType(form.getType());
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("audit_first");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        submission.setStatus(80);
+        submission.setStatus(current.getNextAgree().getStatus());
         submission.setPrepareViewDate2(form.getPrepareViewDate2() == null ? null : sdf.parse(form.getPrepareViewDate2()));
         submission.setViewDate2(form.getViewDate2() == null ? null : sdf.parse(form.getViewDate2()));
         submission.setSubmissionPrice(form.getSubmissionPrice());
@@ -508,29 +641,34 @@ public class SubmissionService {
         submission.setViewPeoplesBuildUnitIds2(form.getViewPeoplesBuildUnitIds2());
         submission.setViewPeoplesConstructUnitIds2(form.getViewPeoplesConstructUnitIds2());
         submission.setViewPeoplesEntrustUnitIds2(form.getViewPeoplesEntrustUnitIds2());
+        submission.setQas(form.getQas());
         submission.setModifyId(loginUser.getId());
         submission.setModifyTime(new Date());
         this.submissionRepository.save(submission);
+        this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), "submission_audit_second_approver", submission, loginUser);
     }
 
     /**
      *
      */
     public void auditSecondApprove(AuditSecondForm form, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("audit_second", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(form.getTargetId());
-        if (submission == null || submission.getStatus() != 80) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
             throw new SystemException(30000);
         }
         Comment comment = new Comment();
         comment.setTargetId(form.getTargetId());
         comment.setContent(form.getComment());
         comment.setType(form.getType());
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("audit_second");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
-        submission.setStatus(90);
+        submission.setStatus(current.getNextAgree().getStatus());
         submission.setSecondAuditPrice(form.getSecondAuditPrice());
 
         BigDecimal auditFee = new BigDecimal(0);
@@ -548,36 +686,45 @@ public class SubmissionService {
         submission.setAuditNote(form.getAuditNote());
         submission.setAuditSecondSub(form.getAuditSecondSub());
         submission.setAuditSecondSubRatio(form.getAuditSecondSubRatio());
+        submission.setAuditSecondNote(form.getAuditSecondNote());
         submission.setModifyId(loginUser.getId());
         submission.setModifyTime(new Date());
         this.submissionRepository.save(submission);
+        this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), "submission_filed_approver", submission, loginUser);
     }
 
     /**
      *
      */
     public void completeApprove(Comment comment, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("complete", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
-        if (submission == null || submission.getStatus() != 90) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
             throw new SystemException(30000);
         }
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("complete");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
-        this.submissionRepository.updateStatus(submission.getId(), comment.getType() == Comment.CommentType.ALLOW ? 100 : 80, loginUser.getId(), new Date());
+        submission.setProjectSum(comment.getProjectSum());
+        this.submissionRepository.save(submission);
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            this.submissionRepository.updateStatus(submission.getId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), "submission_filed_approver", submission, loginUser);
+        } else {
+            this.submissionRepository.updateStatus(submission.getId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextReject().getStage(), "submission_audit_second_approver", submission, loginUser);
+        }
     }
 
     /**
      *
      */
-    public void completeApproves(Long[] targetIds, int type, String commentContent, User loginUser) {
-        for (Long targetId : targetIds) {
-            Comment comment = new Comment();
-            comment.setTargetId(targetId);
-            comment.setContent(commentContent);
-            comment.setType(Comment.CommentType.get(type));
+    public void completeApproves(List<Comment> comments, User loginUser) {
+        for (Comment comment : comments) {
             this.completeApprove(comment, loginUser);
         }
     }
@@ -586,27 +733,32 @@ public class SubmissionService {
      *
      */
     public void filedApprove(Comment comment, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("filed", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
-        if (submission == null || submission.getStatus() != 100) {
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
             throw new SystemException(30000);
         }
-        comment.setTarget("submission");
+        comment.setTarget(current.getTarget());
         comment.setCreator(loginUser);
         comment.setCreateTime(new Date());
-        comment.setStage("filed");
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
-        this.submissionRepository.updateStatus(submission.getId(), comment.getType() == Comment.CommentType.ALLOW ? 110 : 90, loginUser.getId(), new Date());
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            this.submissionRepository.updateStatus(submission.getId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.completeWorkitem(comment.getWorkitemId(), loginUser);
+        } else {
+            this.submissionRepository.updateStatus(submission.getId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextReject().getStage(), "submission_filed_approver", submission, loginUser);
+        }
     }
 
     /**
      *
      */
-    public void filedApproves(Long[] targetIds, int type, String commentContent, User loginUser) {
-        for (Long targetId : targetIds) {
-            Comment comment = new Comment();
-            comment.setTargetId(targetId);
-            comment.setContent(commentContent);
-            comment.setType(Comment.CommentType.get(type));
+    public void filedApproves(List<Comment> comments, User loginUser) {
+        for (Comment comment : comments) {
             this.filedApprove(comment, loginUser);
         }
     }
@@ -614,27 +766,30 @@ public class SubmissionService {
     /**
      *
      */
-    private int auditNoMax;
-
-    /**
-     *
-     */
-    //@Override
-    public void run(ApplicationArguments applicationArguments) {
-        String max = this.submissionRepository.findMaxAuditNo();
-        if (max != null) {
-            this.auditNoMax = Integer.parseInt(max.substring(4));
-        } else {
-            this.auditNoMax = 0;
+    private boolean checkSubmissionStatus(Submission submission, int status) {
+        if (submission == null || submission.isDel()) {
+            return false;
         }
+        return submission.getStatus() == status;
     }
 
     /**
      *
      */
-    private synchronized String generateAuditNo() {
-        return String.format("%d%04d", Calendar.getInstance().get(Calendar.YEAR), ++this.auditNoMax);
+    private String getAuditNo() {
+        String prefix = String.format("JS%d", Calendar.getInstance().get(Calendar.YEAR) - 2000);
+        Integer no = this.submissionRepository.findMaxAuditNo(prefix + "%");
+        if(no == null) {
+            no = 1;
+        }
+        return String.format(prefix + "%03d", no);
     }
+
+    /**
+     *
+     */
+    @Autowired
+    FlowService flowService;
 
     /**
      *
@@ -658,7 +813,19 @@ public class SubmissionService {
      *
      */
     @Autowired
+    WorkitemService workitemService;
+
+    /**
+     *
+     */
+    @Autowired
     CommentRepository commentRepository;
+
+    /**
+     *
+     */
+    @Autowired
+    ThirdpartyService thirdpartyService;
 
     /**
      *

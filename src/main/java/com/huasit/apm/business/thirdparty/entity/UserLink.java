@@ -1,4 +1,4 @@
-package com.huasit.apm.core.user.entity;
+package com.huasit.apm.business.thirdparty.entity;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -7,10 +7,10 @@ import java.io.Serializable;
  *
  */
 @Entity
-@Table(name = "USER_LINK")
-public class UserLink implements Serializable {
+@Table(name = "Thirdparty_LINK")
+public  class UserLink implements Serializable {
 
-	/**
+    /**
      *
      */
     @Id
@@ -21,7 +21,7 @@ public class UserLink implements Serializable {
      *
      */
     @Column
-    private Long uid;
+    private Long thirdpartyId;
 
     /**
      *
@@ -49,12 +49,12 @@ public class UserLink implements Serializable {
         this.id = id;
     }
 
-    public Long getUid() {
-        return uid;
+    public Long getThirdpartyId() {
+        return thirdpartyId;
     }
 
-    public void setUid(Long uid) {
-        this.uid = uid;
+    public void setThirdpartyId(Long thirdpartyId) {
+        this.thirdpartyId = thirdpartyId;
     }
 
     public String getContact() {

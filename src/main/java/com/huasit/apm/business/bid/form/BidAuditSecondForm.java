@@ -4,10 +4,17 @@ import com.huasit.apm.business.bid.entity.BidAuditSecond;
 import com.huasit.apm.core.comment.entity.Comment;
 
 import javax.persistence.Column;
+import javax.persistence.Transient;
 import java.math.BigDecimal;
 import java.util.List;
 
 public class BidAuditSecondForm {
+
+    /**
+     *
+     */
+    @Transient
+    private Long workitemId;
 
     /**
      *
@@ -23,6 +30,11 @@ public class BidAuditSecondForm {
      *
      */
     private String comment;
+
+    /**
+     *
+     */
+    private String auditSecondNote;
 
     /**
      *
@@ -45,6 +57,14 @@ public class BidAuditSecondForm {
 
     public void setTargetId(Long targetId) {
         this.targetId = targetId;
+    }
+
+    public String getAuditSecondNote() {
+        return auditSecondNote;
+    }
+
+    public void setAuditSecondNote(String auditSecondNote) {
+        this.auditSecondNote = auditSecondNote;
     }
 
     public Comment.CommentType getType() {
@@ -101,5 +121,13 @@ public class BidAuditSecondForm {
 
     public void setAuditSecondSubRatio(String auditSecondSubRatio) {
         this.auditSecondSubRatio = auditSecondSubRatio;
+    }
+
+    public Long getWorkitemId() {
+        return workitemId;
+    }
+
+    public void setWorkitemId(Long workitemId) {
+        this.workitemId = workitemId;
     }
 }

@@ -64,7 +64,7 @@ public class Comment {
     /**
      *
      */
-    @Transient
+    @Column(nullable = false)
     private String typeStr;
 
     /**
@@ -76,7 +76,6 @@ public class Comment {
     /**
      *
      */
-    @Transient
     @Column(nullable = false)
     private String stageStr;
 
@@ -98,10 +97,53 @@ public class Comment {
     @Column(nullable = false)
     private Date createTime;
 
-
+    /**
+     *
+     */
     @Transient
     private String auditNo;
 
+    /**
+     *
+     */
+    @Transient
+    private Long workitemId;
+
+    /**
+     *
+     */
+    @Transient
+    private String auditType;
+
+    /**
+     *
+     */
+    @Transient
+    private Long assignedId;
+
+    /**
+     *
+     */
+    @Transient
+    private Long thirdpartyId;
+
+    /**
+     *
+     */
+    @Transient
+    private String prepareViewDate;
+
+    /**
+     *
+     */
+    @Transient
+    private String memberIds;
+
+    /**
+     *
+     */
+    @Transient
+    private String projectSum;
 
     public Long getId() {
         return id;
@@ -125,6 +167,14 @@ public class Comment {
 
     public void setTarget(String target) {
         this.target = target;
+    }
+
+    public Long getWorkitemId() {
+        return workitemId;
+    }
+
+    public void setWorkitemId(Long workitemId) {
+        this.workitemId = workitemId;
     }
 
     public Long getTargetId() {
@@ -197,5 +247,53 @@ public class Comment {
 
     public void setAuditNo(String auditNo) {
         this.auditNo = auditNo;
+    }
+
+    public String getAuditType() {
+        return auditType;
+    }
+
+    public void setAuditType(String auditType) {
+        this.auditType = auditType;
+    }
+
+    public Long getAssignedId() {
+        return assignedId;
+    }
+
+    public void setAssignedId(Long assignedId) {
+        this.assignedId = assignedId;
+    }
+
+    public Long getThirdpartyId() {
+        return thirdpartyId;
+    }
+
+    public void setThirdpartyId(Long thirdpartyId) {
+        this.thirdpartyId = thirdpartyId;
+    }
+
+    public String getPrepareViewDate() {
+        return prepareViewDate;
+    }
+
+    public void setPrepareViewDate(String prepareViewDate) {
+        this.prepareViewDate = prepareViewDate;
+    }
+
+    public String getMemberIds() {
+        return memberIds;
+    }
+
+    public void setMemberIds(String memberIds) {
+        this.memberIds = memberIds;
+    }
+
+    public String getProjectSum() {
+        return projectSum;
+    }
+
+    public void setProjectSum(String projectSum) {
+        this.projectSum = projectSum;
     }
 }

@@ -2,7 +2,6 @@ package com.huasit.apm.core.role.service;
 
 import com.huasit.apm.core.role.entity.Role;
 import com.huasit.apm.core.role.entity.RoleRepository;
-import com.huasit.apm.core.role.entity.RoleUser;
 import com.huasit.apm.core.user.entity.User;
 import com.huasit.apm.core.user.entity.UserRepository;
 import com.huasit.apm.system.exception.SystemException;
@@ -68,26 +67,16 @@ public class RoleService {
         form.setModifyId(loginUser.getId());
         form.setModifyTime(new Date());
         if (form.getId() == null) {
-            form.setCreatorId(form.getModifyId());
-            form.setCreateTime(form.getModifyTime());
+            form.setCreatorId(loginUser.getId());
+            form.setCreateTime(new Date());
         } else {
             Role db = this.roleRepository.findRoleById(form.getId());
             if (db == null || db.isDel()) {
                 throw new SystemException(30000);
             }
             form.setRkey(db.getRkey());
-            form.setName(db.getName());
             form.setCreatorId(db.getCreatorId());
             form.setCreateTime(db.getCreateTime());
-        }
-        if(form.getUsers() != null) {
-            for(RoleUser u : form.getUsers()) {
-                if(u.getUser() == null || u.getUser().getId() == null) {
-                    continue;
-                }
-                User user = this.userRepository.findUserById(u.getUser().getId());
-                u.setUser(user);
-            }
         }
         this.roleRepository.save(form);
     }
@@ -103,11 +92,11 @@ public class RoleService {
      *
      */
     @Autowired
-    RoleRepository roleRepository;
+    UserRepository userRepository;
 
     /**
      *
      */
     @Autowired
-    UserRepository userRepository;
+    RoleRepository roleRepository;
 }

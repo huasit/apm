@@ -26,7 +26,7 @@ public class CommentController {
     @ResponseBody
     @GetMapping("/list/")
     public ResponseEntity<Map<String, Object>> list(@RequestParam("target") String target,@RequestParam("targetId") Long targetId, HttpServletRequest request) {
-        List<Comment> list = this.commentService.getByTarget(target, targetId, request);
+        List<Comment> list = this.commentService.getByTarget(target, targetId);
         return new ResponseEntity<>(ImmutableMap.of("list", list), HttpStatus.OK);
     }
 

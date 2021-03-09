@@ -30,7 +30,7 @@ public class MenuController {
         User loginUser = this.userLoginService.getLoginUser(request);
         List<Menu> list;
         if(pid == null) {
-            list = this.menuService.getUserMenuTree(loginUser.getId());
+            list = this.menuService.getUserMenuTree(loginUser);
         } else {
             list = this.menuService.getUserMenuTreeWithParent(pid, loginUser.getId());
         }

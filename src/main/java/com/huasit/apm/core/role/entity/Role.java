@@ -2,7 +2,6 @@ package com.huasit.apm.core.role.entity;
 
 import javax.persistence.*;
 import java.util.Date;
-import java.util.List;
 
 @Entity
 @Table(name = "ROLE")
@@ -56,13 +55,6 @@ public class Role {
      */
     @Column
     private Date createTime;
-
-    /**
-     *
-     */
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name="rid")
-    private List<RoleUser> users;
 
     public Long getId() {
         return id;
@@ -126,13 +118,5 @@ public class Role {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
-    }
-
-    public List<RoleUser> getUsers() {
-        return users;
-    }
-
-    public void setUsers(List<RoleUser> users) {
-        this.users = users;
     }
 }

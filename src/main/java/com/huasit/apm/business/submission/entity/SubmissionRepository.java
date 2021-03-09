@@ -1,7 +1,7 @@
 package com.huasit.apm.business.submission.entity;
 
+import com.huasit.apm.business.thirdparty.entity.Thirdparty;
 import com.huasit.apm.core.user.entity.User;
-import com.huasit.apm.core.user.entity.UserLink;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,8 +23,8 @@ public interface SubmissionRepository extends CrudRepository<Submission, Long>, 
     /**
      *
      */
-    @Query("select max(auditNo) from Submission where auditNo is not null")
-    String findMaxAuditNo();
+    @Query(nativeQuery = true, value = "SELECT max(convert(SUBSTRING(audit_no,5,3),signed))+1 FROM submission where audit_no like ?1")
+    Integer findMaxAuditNo(String prefix);
 
     /**
      *
@@ -51,8 +51,15 @@ public interface SubmissionRepository extends CrudRepository<Submission, Long>, 
      *
      */
     @Modifying
-    @Query("update Submission set status=:status,assigned=:assigned,assignedLink=:assignedLink,auditType=:auditType,modifyId=:modifyId,modifyTime=:modifyTime where id=:id")
-    void updateStatusAndAssigned(@Param("id") Long id, @Param("status") int status, @Param("assigned") User assigned, @Param("assignedLink") UserLink assignedLink, @Param("auditType") String auditType, @Param("modifyId") Long modifyId, @Param("modifyTime") Date modifyTime);
+    @Query("update Submission set status=:status,memberIds=:memberIds,modifyId=:modifyId,modifyTime=:modifyTime where id=:id")
+    void updateStatusAndMemberIds(@Param("id") Long id, @Param("status") int status, @Param("memberIds") String memberIds, @Param("modifyId") Long modifyId, @Param("modifyTime") Date modifyTime);
+
+    /**
+     *
+     */
+    @Modifying
+    @Query("update Submission set status=:status,assigned=:assigned,thirdparty=:thirdparty,auditType=:auditType,modifyId=:modifyId,modifyTime=:modifyTime where id=:id")
+    void updateStatusAndAssigned(@Param("id") Long id, @Param("status") int status, @Param("assigned") User assigned, @Param("thirdparty") Thirdparty thirdparty, @Param("auditType") String auditType, @Param("modifyId") Long modifyId, @Param("modifyTime") Date modifyTime);
 
     /**
      *

@@ -9,7 +9,6 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -126,62 +125,63 @@ public class ExcelUtil {
         return s;
     }
 
+
+    /**
+     *
+     */
+    public static String value(Object o) {
+        if(o == null) {
+            return "";
+        }
+        return o.toString();
+    }
+
     /**
      *
      */
     public static HSSFWorkbook export(String[] titles, List<Object[]> datas) {
         // 创建Excel
         HSSFWorkbook workbook = new HSSFWorkbook();
-        int sheetIndex = 0;
-        int sheetMaxRows = 65534;
-        while (true) {
-            sheetIndex++;
-            HSSFSheet sheet = workbook.createSheet("sheet" + sheetIndex);
-            // 表头标题样式
-            HSSFFont headfont = workbook.createFont();
-            headfont.setFontName("宋体");
-            headfont.setFontHeightInPoints((short) 12);
-            HSSFCellStyle headStyle = workbook.createCellStyle();
-            headStyle.setFont(headfont);
-            headStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
-            headStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
-            headStyle.setLocked(true);
-            // 文本列名样式
-            HSSFFont font = workbook.createFont();
-            font.setFontName("宋体");
-            font.setFontHeightInPoints((short) 12);// 字体大小
-            HSSFCellStyle textStyle = workbook.createCellStyle();
-            textStyle.setFont(font);
-            textStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);// 左右居中
-            textStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);// 上下居中
-            textStyle.setLocked(true);
-            // 数据列名样式
-            HSSFCellStyle numberStyle = workbook.createCellStyle();
-            numberStyle.setFont(font);
-            numberStyle.setAlignment(HSSFCellStyle.ALIGN_RIGHT);// 左右居中
-            numberStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);// 上下居中
-            numberStyle.setLocked(true);
-            Row titleRow = sheet.createRow(0);
-            for (int n = 0; n < titles.length; n++) {
-                Cell cell = titleRow.createCell(n);
-                cell.setCellValue(titles[n]);
-                cell.setCellStyle(headStyle);
-            }
-            if (datas != null) {
-                int rowNum = 1;
-                int trueSize = datas.size() - (sheetMaxRows * (sheetIndex - 1));
-                for (int m = 0; m < (trueSize > sheetMaxRows ? sheetMaxRows : trueSize); m++) {
-                    Object[] data = datas.get(m - trueSize + datas.size());
-                    Row dataRow = sheet.createRow(rowNum++);
-                    for (int n = 0; n < data.length; n++) {
-                        Cell cell = dataRow.createCell(n);
-                        String text = data[n] == null ? "" : data[n].toString();
-                        cell.setCellValue(text);
-                        cell.setCellStyle(numberStyle);
-                    }
-                }
-                if (trueSize <= sheetMaxRows) {
-                    break;
+        HSSFSheet sheet = workbook.createSheet("sheet");
+        // 表头标题样式
+        HSSFFont headfont = workbook.createFont();
+        headfont.setFontName("宋体");
+        headfont.setFontHeightInPoints((short) 12);
+        HSSFCellStyle headStyle = workbook.createCellStyle();
+        headStyle.setFont(headfont);
+        headStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+        headStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
+        headStyle.setLocked(true);
+        // 文本列名样式
+        HSSFFont font = workbook.createFont();
+        font.setFontName("宋体");
+        font.setFontHeightInPoints((short) 12);// 字体大小
+        HSSFCellStyle textStyle = workbook.createCellStyle();
+        textStyle.setFont(font);
+        textStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);// 左右居中
+        textStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);// 上下居中
+        textStyle.setLocked(true);
+        // 数据列名样式
+        HSSFCellStyle numberStyle = workbook.createCellStyle();
+        numberStyle.setFont(font);
+        numberStyle.setAlignment(HSSFCellStyle.ALIGN_RIGHT);// 左右居中
+        numberStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);// 上下居中
+        numberStyle.setLocked(true);
+        Row titleRow = sheet.createRow(0);
+        for (int n = 0; n < titles.length; n++) {
+            Cell cell = titleRow.createCell(n);
+            cell.setCellValue(titles[n]);
+            cell.setCellStyle(headStyle);
+        }
+        if (datas != null) {
+            int rowNum = 1;
+            for(Object[] data : datas) {
+                Row dataRow = sheet.createRow(rowNum++);
+                for (int n = 0; n < data.length; n++) {
+                    Cell cell = dataRow.createCell(n);
+                    String text = data[n] == null ? "" : data[n].toString();
+                    cell.setCellValue(text);
+                    cell.setCellStyle(numberStyle);
                 }
             }
         }

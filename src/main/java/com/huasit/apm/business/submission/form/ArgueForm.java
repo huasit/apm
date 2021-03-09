@@ -10,6 +10,11 @@ public class ArgueForm {
     /**
      *
      */
+    private Long workitemId;
+
+    /**
+     *
+     */
     private Long targetId;
 
     /**
@@ -49,6 +54,14 @@ public class ArgueForm {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public Long getWorkitemId() {
+        return workitemId;
+    }
+
+    public void setWorkitemId(Long workitemId) {
+        this.workitemId = workitemId;
     }
 
     public List<SubmissionArgueFile> getArgueFiles() {

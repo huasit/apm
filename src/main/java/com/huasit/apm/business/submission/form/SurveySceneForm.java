@@ -10,6 +10,16 @@ public class SurveySceneForm {
     /**
      *
      */
+    private int status;
+
+    /**
+     *
+     */
+    private Long workitemId;
+
+    /**
+     *
+     */
     private Long targetId;
 
     /**
@@ -38,12 +48,28 @@ public class SurveySceneForm {
      */
     private List<SubmissionSurveyFile> surveyFiles;
 
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
     public Long getTargetId() {
         return targetId;
     }
 
     public void setTargetId(Long targetId) {
         this.targetId = targetId;
+    }
+
+    public Long getWorkitemId() {
+        return workitemId;
+    }
+
+    public void setWorkitemId(Long workitemId) {
+        this.workitemId = workitemId;
     }
 
     public String getViewDate() {

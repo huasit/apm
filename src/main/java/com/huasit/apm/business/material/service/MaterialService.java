@@ -48,6 +48,7 @@ public class MaterialService {
         }
         db.setName(material.getName());
         db.setRequired(material.isRequired());
+        db.setDescription(material.getDescription());
         db.setModifyId(loginUser.getId());
         db.setModifyTime(new Date());
         this.materialRepository.save(db);

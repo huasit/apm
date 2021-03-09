@@ -10,6 +10,11 @@ public class ArgueRejectForm {
     /**
      *
      */
+    private Long workitemId;
+
+    /**
+     *
+     */
     private Long targetId;
 
     /**
@@ -57,5 +62,13 @@ public class ArgueRejectForm {
 
     public void setSupplementFiles(List<SubmissionSupplementFile> supplementFiles) {
         this.supplementFiles = supplementFiles;
+    }
+
+    public Long getWorkitemId() {
+        return workitemId;
+    }
+
+    public void setWorkitemId(Long workitemId) {
+        this.workitemId = workitemId;
     }
 }

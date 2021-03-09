@@ -21,7 +21,7 @@ public class Interceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
-        if(request.getRequestURI().contains("/third-party/")) {
+        if(request.getRequestURI().contains("/third-party/")||request.getRequestURI().contains("/file/download/")) {
             return true;
         }
         return this.userLoginService.checkLogin(request, response);
