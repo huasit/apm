@@ -1,9 +1,8 @@
 target/
 logs/
 application.properties
-
 .idea
-.mvn
+.mvn/
+*.iml
 mvnw
 mvnw.cmd
-*.iml
