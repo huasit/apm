@@ -24,7 +24,7 @@ public class SystemExceptionHandler {
     @ResponseBody
     @ExceptionHandler(value = SystemException.class)
     public ResponseEntity<Map<String, Object>> systemExceptionHandler(HttpServletRequest request, SystemException e) throws Exception {
-        return new ResponseEntity<>(LocaleUtil.getErrorResponseEntity(request, e.code), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(LocaleUtil.getErrorResponseEntityWithArgs(request, e.code,e.args), HttpStatus.BAD_REQUEST);
     }
 
     /**

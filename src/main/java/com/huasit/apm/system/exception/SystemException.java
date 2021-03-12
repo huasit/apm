@@ -9,13 +9,15 @@ public class SystemException extends RuntimeException {
      *
      */
     public int code;
+    public Object[] args;
 
     /**
      *
      */
-    public SystemException(int code) {
+    public SystemException(int code, Object... args) {
         super();
         this.code = code;
+        this.args = args;
     }
 
     /**

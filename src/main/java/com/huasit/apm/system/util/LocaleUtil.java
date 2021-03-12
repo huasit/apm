@@ -44,4 +44,8 @@ public class LocaleUtil {
     public static Map<String, Object> getErrorResponseEntity(HttpServletRequest request, int errorCode) {
         return ImmutableMap.of("error_code", errorCode, "error_msg", getMessage(request, "err_" + errorCode));
     }
+
+    public static Map<String, Object> getErrorResponseEntityWithArgs(HttpServletRequest request, int errorCode, Object... args) {
+        return ImmutableMap.of("error_code", errorCode, "error_msg", getMessage(request, "err_" + errorCode, args));
+    }
 }

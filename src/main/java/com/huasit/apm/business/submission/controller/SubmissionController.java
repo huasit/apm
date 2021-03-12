@@ -62,7 +62,7 @@ public class SubmissionController {
         Page<Submission> list = this.submissionService.list(form, assignedId, 1, 9999, loginUser);
         Map<Integer, Flow> statusMap = this.flowService.getTargetStatusMap("submission");
         Map<Long, Construction> constructionMap = this.constructionService.getMap();
-        String[] titles = new String[]{"审计状态", "审计编号", "工程项目", "立项代码", "合同编码", "施工单位", "中标/合同金额","中介机构","审计方式","送审金额","审定金额","惩罚性费用"};
+        String[] titles = new String[]{"审计状态", "审计编号", "工程项目", "立项代码", "合同编码", "施工单位", "中标/合同金额", "中介机构", "审计方式", "送审金额", "审定金额", "惩罚性费用"};
         List<Object[]> datas = new ArrayList<>();
         if (list.hasContent()) {
             for (Submission data : list.getContent()) {
@@ -74,7 +74,7 @@ public class SubmissionController {
                 s[4] = ExcelUtil.value(data.getContractNo());
                 s[5] = ExcelUtil.value(data.getConstructionUnit() == null ? "" : constructionMap.get(data.getConstructionUnit()).getName());
                 s[6] = ExcelUtil.value(data.getContractMoney());
-                s[7] = ExcelUtil.value(data.getAssigned() == null ? "": data.getAssigned().getName());
+                s[7] = ExcelUtil.value(data.getAssigned() == null ? "" : data.getAssigned().getName());
                 s[8] = ExcelUtil.value(data.getAuditType());
                 s[9] = ExcelUtil.value(data.getSubmissionPrice());
                 s[10] = ExcelUtil.value(data.getSecondAuditPrice());
@@ -82,7 +82,7 @@ public class SubmissionController {
                 datas.add(s);
             }
         }
-        WebUtil.excelExport("export", ExcelUtil.export(titles, datas),request,response);
+        WebUtil.excelExport("export", ExcelUtil.export(titles, datas), request, response);
     }
 
     /**
@@ -178,7 +178,7 @@ public class SubmissionController {
      */
     @ResponseBody
     @PostMapping("/check/approves/")
-    public ResponseEntity<Map<String, Object>> checkApproves(@RequestBody List<Comment> comments,HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> checkApproves(@RequestBody List<Comment> comments, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
         this.submissionService.checkApproves(comments, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
@@ -258,6 +258,17 @@ public class SubmissionController {
     public ResponseEntity<Map<String, Object>> auditFirstApprove(@RequestBody AuditSecondForm form, HttpServletRequest request) throws Exception {
         User loginUser = this.userLoginService.getLoginUser(request);
         this.submissionService.auditSecondApprove(form, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
+
+    /**
+     * 征求意见
+     */
+    @ResponseBody
+    @PostMapping("/takeAdvice/")
+    public ResponseEntity<Map<String, Object>> takeAdvice(@RequestBody Comment comment, HttpServletRequest request) throws Exception {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.submissionService.takeAdvice(comment, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 

@@ -1,8 +1,15 @@
 package com.huasit.apm.core.flow.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
 
 @Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "FLOW")
 public class Flow {
 
@@ -48,14 +55,18 @@ public class Flow {
      *
      */
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.REFRESH)
-    @JoinColumn(name="nextAgreeId")
+    @JoinColumn(name = "nextAgreeId")
     private Flow nextAgree;
+
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.REFRESH)
+    @JoinColumn(name = "nextAgreeId2")
+    private Flow nextAgree2;
 
     /**
      *
      */
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.REFRESH)
-    @JoinColumn(name="nextRejectId")
+    @JoinColumn(name = "nextRejectId")
     private Flow nextReject;
 
     /**
@@ -70,83 +81,4 @@ public class Flow {
     @Column(nullable = false)
     private String rejectStr;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTarget() {
-        return target;
-    }
-
-    public void setTarget(String target) {
-        this.target = target;
-    }
-
-    public String getStage() {
-        return stage;
-    }
-
-    public void setStage(String stage) {
-        this.stage = stage;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
-    public String getTargetStr() {
-        return targetStr;
-    }
-
-    public void setTargetStr(String targetStr) {
-        this.targetStr = targetStr;
-    }
-
-    public String getStageStr() {
-        return stageStr;
-    }
-
-    public void setStageStr(String stageStr) {
-        this.stageStr = stageStr;
-    }
-
-    public Flow getNextAgree() {
-        return nextAgree;
-    }
-
-    public void setNextAgree(Flow nextAgree) {
-        this.nextAgree = nextAgree;
-    }
-
-    public Flow getNextReject() {
-        return nextReject;
-    }
-
-    public void setNextReject(Flow nextReject) {
-        this.nextReject = nextReject;
-    }
-
-    public String getAgreeStr() {
-        return agreeStr;
-    }
-
-    public void setAgreeStr(String agreeStr) {
-        this.agreeStr = agreeStr;
-    }
-
-    public String getRejectStr() {
-        return rejectStr;
-    }
-
-    public void setRejectStr(String rejectStr) {
-        this.rejectStr = rejectStr;
-    }
 }

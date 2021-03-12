@@ -23,7 +23,7 @@ public interface BidRepository extends CrudRepository<Bid, Long>, JpaSpecificati
     /**
      *
      */
-    @Query(nativeQuery = true, value = "SELECT max(convert(SUBSTRING(audit_no,5,3),signed))+1 FROM Bid where audit_no like ?1")
+    @Query(nativeQuery = true, value = "SELECT max(convert(SUBSTRING(audit_no,5,3),signed))+1 FROM bid where audit_no like ?1")
     Integer findMaxAuditNo(String prefix);
 
     /**

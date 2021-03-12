@@ -1,8 +1,7 @@
 package com.huasit.apm.business.bid.service;
 
 import com.huasit.apm.business.bid.entity.*;
-import com.huasit.apm.business.bid.form.BidAuditFirstForm;
-import com.huasit.apm.business.bid.form.BidAuditSecondForm;
+import com.huasit.apm.business.bid.form.*;
 import com.huasit.apm.business.thirdparty.entity.Thirdparty;
 import com.huasit.apm.business.thirdparty.service.ThirdpartyService;
 import com.huasit.apm.core.comment.entity.Comment;
@@ -30,6 +29,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -56,6 +56,48 @@ public class BidService {
         Bid bid = this.bidRepository.findBidById(id);
         if (bid.getDetails() != null) {
             for (BidDetail detail : bid.getDetails()) {
+                if (detail.getmFileIds() != null && !"".equals(detail.getmFileIds())) {
+                    List<Long> ids = new ArrayList<>();
+                    for (String i : detail.getmFileIds().split(",")) {
+                        if (!"".equals(i.trim())) {
+                            try {
+                                ids.add(Long.parseLong(i));
+                            } catch (Exception e) {
+
+                            }
+                        }
+                    }
+                    if (ids.size() > 0) {
+                        List<File> files = this.fileService.getFileByIds(ids);
+                        detail.setmFiles(files);
+                    }
+                }
+                if (detail.getmFiles() == null) {
+                    detail.setmFiles(new ArrayList<>());
+                }
+            }
+            for (BidArgueFile detail : bid.getArgueFiles()) {
+                if (detail.getmFileIds() != null && !"".equals(detail.getmFileIds())) {
+                    List<Long> ids = new ArrayList<>();
+                    for (String i : detail.getmFileIds().split(",")) {
+                        if (!"".equals(i.trim())) {
+                            try {
+                                ids.add(Long.parseLong(i));
+                            } catch (Exception e) {
+
+                            }
+                        }
+                    }
+                    if (ids.size() > 0) {
+                        List<File> files = this.fileService.getFileByIds(ids);
+                        detail.setmFiles(files);
+                    }
+                }
+                if (detail.getmFiles() == null) {
+                    detail.setmFiles(new ArrayList<>());
+                }
+            }
+            for (BidSupplementFile detail : bid.getSupplementFiles()) {
                 if (detail.getmFileIds() != null && !"".equals(detail.getmFileIds())) {
                     List<Long> ids = new ArrayList<>();
                     for (String i : detail.getmFileIds().split(",")) {
@@ -156,7 +198,7 @@ public class BidService {
                     predicates.add(cb.equal(root.get("creatorId").as(Long.class), loginUser.getId()));
                 } else if (!viewAll && new Long(-1).equals(form.getCreatorId())) {
                     predicates.add(cb.equal(root.get("creatorId").as(Long.class), -1L));
-                }else if (!viewAll) {
+                } else if (!viewAll) {
                     predicates.add(cb.equal(root.get("creatorId").as(Long.class), loginUser.getId()));
                 }
                 predicates.add(cb.equal(root.get("del").as(boolean.class), false));
@@ -169,7 +211,7 @@ public class BidService {
         }, pageRequest);
     }
 
-     /**
+    /**
      *
      */
     public void save(Bid form, User loginUser) {
@@ -227,11 +269,12 @@ public class BidService {
         this.bidRepository.save(form);
         this.workitemService.createWorkitemWithApply(current.getNextAgree().getStage(), "bid_project_approver", form, loginUser);
     }
+
     /**
      *
      */
     public void restart(Bid form, User loginUser) {
-        Flow current = this.flowService.getCurrentNode("reject",Bid.class);
+        Flow current = this.flowService.getCurrentNode("reject", Bid.class);
         if (form.getStatus() != current.getStatus()) {
             throw new SystemException(30000);
         }
@@ -255,7 +298,7 @@ public class BidService {
      *
      */
     public void projectApprove(Comment comment, User loginUser) {
-        Flow current = this.flowService.getCurrentNode("project",Bid.class);
+        Flow current = this.flowService.getCurrentNode("project", Bid.class);
         Bid bid = this.bidRepository.findBidById(comment.getTargetId());
         if (bid == null || bid.getStatus() != current.getStatus()) {
             throw new SystemException(30000);
@@ -269,7 +312,7 @@ public class BidService {
         this.commentRepository.save(comment);
         if (comment.getType() == Comment.CommentType.ALLOW) {
             this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), "bid_distribution_approver", bid, loginUser);
-            if(bid.getAuditNo() == null) {
+            if (bid.getAuditNo() == null) {
                 this.bidRepository.updateStatusAndAuditNo(comment.getTargetId(), current.getNextAgree().getStatus(), this.getAuditNo(), loginUser.getId(), new Date());
             } else {
                 this.bidRepository.updateStatus(comment.getTargetId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
@@ -293,7 +336,7 @@ public class BidService {
      *
      */
     public void distributionApprove(Comment comment, User loginUser) {
-        Flow current = this.flowService.getCurrentNode("distribution",Bid.class);
+        Flow current = this.flowService.getCurrentNode("distribution", Bid.class);
         Bid bid = this.bidRepository.findBidById(comment.getTargetId());
         if (bid == null || bid.getStatus() != current.getStatus()) {
             throw new SystemException(30000);
@@ -311,7 +354,7 @@ public class BidService {
             if (comment.getThirdpartyId() != null) {
                 thirdparty = this.thirdpartyService.getThirdpartyById(comment.getThirdpartyId());
             }
-            this.bidRepository.updateStatusAndAssigned(comment.getTargetId(), current.getNextAgree().getStatus(), assigned,thirdparty, comment.getAuditType(), loginUser.getId(), new Date());
+            this.bidRepository.updateStatusAndAssigned(comment.getTargetId(), current.getNextAgree().getStatus(), assigned, thirdparty, comment.getAuditType(), loginUser.getId(), new Date());
             this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), new Long[]{assigned.getId()}, bid, loginUser);
         } else {
             this.bidRepository.updateStatus(comment.getTargetId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
@@ -332,7 +375,7 @@ public class BidService {
      *
      */
     public void memberlApprove(Comment comment, User loginUser) {
-        Flow current = this.flowService.getCurrentNode("memberl",Bid.class);
+        Flow current = this.flowService.getCurrentNode("memberl", Bid.class);
         Bid bid = this.bidRepository.findBidById(comment.getTargetId());
         if (!this.checkBidStatus(bid, current.getStatus())) {
             throw new SystemException(30000);
@@ -357,7 +400,7 @@ public class BidService {
      *
      */
     public void checkApprove(Comment comment, User loginUser) {
-        Flow current = this.flowService.getCurrentNode("check",Bid.class);
+        Flow current = this.flowService.getCurrentNode("check", Bid.class);
         Bid bid = this.bidRepository.findBidById(comment.getTargetId());
         if (bid == null || bid.getStatus() != current.getStatus()) {
             throw new SystemException(30000);
@@ -381,17 +424,136 @@ public class BidService {
     /**
      *
      */
-    public void checkApproves(List<Comment> comments, User loginUser) {
-        for (Comment comment : comments) {
-            this.checkApprove(comment, loginUser);
+    public void checkApproves(BidCheckApprovesForm form, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("check", Bid.class);
+        Bid bid = this.bidRepository.findBidById(form.getTargetId());
+
+        if (!this.checkBidStatus(bid, current.getStatus())) {
+            throw new SystemException(30000);
+        }
+        if (form.getType() == Comment.CommentType.DISALLOW) {
+            form.setStatus(current.getNextReject().getStatus());
+        } else {
+            if (form.getStatus() != current.getNextAgree().getStatus() && form.getStatus() != current.getNextAgree2().getStatus()) {
+                throw new SystemException(30000);
+            }
+        }
+
+        Comment comment = new Comment();
+        comment.setTargetId(form.getTargetId());
+        comment.setContent(form.getComment());
+        comment.setType(form.getType());
+        comment.setTarget(current.getTarget());
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
+        this.commentRepository.save(comment);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        bid.setStatus(form.getStatus());
+        bid.setModifyId(loginUser.getId());
+        bid.setModifyTime(new Date());
+        this.bidRepository.save(bid);
+        String nextStep = "";
+        if (form.getStatus() == current.getNextAgree().getStatus()) {
+            nextStep = current.getNextAgree().getStage();
+        } else if (form.getStatus() == current.getNextAgree2().getStatus()) {
+            nextStep = current.getNextAgree2().getStage();
+        } else if (form.getStatus() == current.getNextReject().getStatus()) {
+            nextStep = current.getNextReject().getStage();
+        }
+        this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), nextStep, new Long[]{bid.getAssigned().getId()}, bid, loginUser);
+    }
+
+    public void argueApprove(BidArgueForm form, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("argue", Bid.class);
+        Bid bid = this.bidRepository.findBidById(form.getTargetId());
+        if (!this.checkBidStatus(bid, current.getStatus())) {
+            throw new SystemException(30000);
+        }
+        Comment comment = new Comment();
+        comment.setTargetId(form.getTargetId());
+        comment.setContent(form.getComment());
+        comment.setType(form.getType());
+        comment.setTarget(current.getTarget());
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
+        this.commentRepository.save(comment);
+        bid.setArgueFiles(form.getArgueFiles());
+        bid.setModifyId(loginUser.getId());
+        bid.setModifyTime(new Date());
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            bid.setStatus(current.getNextAgree().getStatus());
+            this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), new Long[]{bid.getAssigned().getId()}, bid, loginUser);
+        } else {
+            bid.setStatus(current.getNextReject().getStatus());
+            this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextReject().getStage(), "bid_audit_dept_approver", bid, loginUser);
+        }
+        this.bidRepository.save(bid);
+    }
+
+    /**
+     *
+     */
+    public void auditDeptApprove(Comment comment, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("audit_dept", Bid.class);
+        Bid bid = this.bidRepository.findBidById(comment.getTargetId());
+        if (!this.checkBidStatus(bid, current.getStatus())) {
+            throw new SystemException(30000);
+        }
+        comment.setTarget(current.getTarget());
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
+        this.commentRepository.save(comment);
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            this.bidRepository.updateStatus(comment.getTargetId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), new Long[]{bid.getAssigned().getId()}, bid, loginUser);
+        } else {
+            this.bidRepository.updateStatus(comment.getTargetId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextReject().getStage(), new Long[]{bid.getCreatorId()}, bid, loginUser);
         }
     }
 
     /**
      *
      */
-    public void auditFirstApprove(BidAuditFirstForm form, User loginUser)  {
-        Flow current = this.flowService.getCurrentNode("audit_first",Bid.class);
+    public void argueRejectApprove(BidArgueRejectForm form, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("argue_reject", Bid.class);
+        Bid bid = this.bidRepository.findBidById(form.getTargetId());
+        if (!this.checkBidStatus(bid, current.getStatus())) {
+            throw new SystemException(30000);
+        }
+        Comment comment = new Comment();
+        comment.setTargetId(form.getTargetId());
+        comment.setContent(form.getComment());
+        comment.setType(form.getType());
+        comment.setTarget(current.getTarget());
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
+        this.commentRepository.save(comment);
+        bid.setStatus(current.getNextAgree().getStatus());
+        bid.setSupplementFiles(form.getSupplementFiles());
+        bid.setModifyId(loginUser.getId());
+        bid.setModifyTime(new Date());
+        this.bidRepository.save(bid);
+        this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), "bid_audit_dept_approver", bid, loginUser);
+    }
+
+    /**
+     *
+     */
+    public void auditFirstApprove(BidAuditFirstForm form, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("audit_first", Bid.class);
         Bid bid = this.bidRepository.findBidById(form.getTargetId());
         if (bid == null || bid.getStatus() != current.getStatus()) {
             throw new SystemException(30000);
@@ -424,7 +586,7 @@ public class BidService {
      *
      */
     public void auditSecondApprove(BidAuditSecondForm form, User loginUser) {
-        Flow current = this.flowService.getCurrentNode("audit_second",Bid.class);
+        Flow current = this.flowService.getCurrentNode("audit_second", Bid.class);
         Bid bid = this.bidRepository.findBidById(form.getTargetId());
         if (bid == null || bid.getStatus() != current.getStatus()) {
             throw new SystemException(30000);
@@ -465,11 +627,35 @@ public class BidService {
         this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), "bid_filed_approver", bid, loginUser);
     }
 
+    public void takeAdvice(Comment comment, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("take_advice", Bid.class);
+        Bid bid = this.bidRepository.findBidById(comment.getTargetId());
+        if (!this.checkBidStatus(bid, current.getStatus())) {
+            throw new SystemException(30000);
+        }
+        comment.setTarget(current.getTarget());
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
+        this.commentRepository.save(comment);
+        bid.setProjectSum(comment.getProjectSum());
+        this.bidRepository.save(bid);
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            this.bidRepository.updateStatus(bid.getId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), "bid_filed_approver", bid, loginUser);
+        } else {
+            this.bidRepository.updateStatus(bid.getId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextReject().getStage(), "bid_audit_second_approver", bid, loginUser);
+        }
+    }
+
     /**
      *
      */
     public void completeApprove(Comment comment, User loginUser) {
-        Flow current = this.flowService.getCurrentNode("complete",Bid.class);
+        Flow current = this.flowService.getCurrentNode("complete", Bid.class);
         Bid bid = this.bidRepository.findBidById(comment.getTargetId());
         if (bid == null || bid.getStatus() != current.getStatus()) {
             throw new SystemException(30000);
@@ -483,7 +669,7 @@ public class BidService {
         this.commentRepository.save(comment);
         bid.setProjectSum(comment.getProjectSum());
         this.bidRepository.save(bid);
-        if(comment.getType() == Comment.CommentType.ALLOW) {
+        if (comment.getType() == Comment.CommentType.ALLOW) {
             this.bidRepository.updateStatus(bid.getId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
             this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), "bid_filed_approver", bid, loginUser);
         } else {
@@ -495,7 +681,7 @@ public class BidService {
     /**
      *
      */
-    public void completeApproves(List<Comment>  comments, User loginUser) {
+    public void completeApproves(List<Comment> comments, User loginUser) {
         for (Comment comment : comments) {
             this.completeApprove(comment, loginUser);
         }
@@ -505,7 +691,7 @@ public class BidService {
      *
      */
     public void filedApprove(Comment comment, User loginUser) {
-        Flow current = this.flowService.getCurrentNode("filed",Bid.class);
+        Flow current = this.flowService.getCurrentNode("filed", Bid.class);
         Bid bid = this.bidRepository.findBidById(comment.getTargetId());
         if (bid == null || bid.getStatus() != current.getStatus()) {
             throw new SystemException(30000);
@@ -517,7 +703,7 @@ public class BidService {
         comment.setStageStr(current.getStageStr());
         comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
         this.commentRepository.save(comment);
-        if(comment.getType() == Comment.CommentType.ALLOW) {
+        if (comment.getType() == Comment.CommentType.ALLOW) {
             this.bidRepository.updateStatus(bid.getId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
             this.workitemService.completeWorkitem(comment.getWorkitemId(), loginUser);
         } else {
@@ -529,7 +715,7 @@ public class BidService {
     /**
      *
      */
-    public void filedApproves(List<Comment>  comments, User loginUser) {
+    public void filedApproves(List<Comment> comments, User loginUser) {
         for (Comment comment : comments) {
             this.filedApprove(comment, loginUser);
         }
@@ -551,7 +737,7 @@ public class BidService {
     private String getAuditNo() {
         String prefix = String.format("KS%d", Calendar.getInstance().get(Calendar.YEAR) - 2000);
         Integer no = this.bidRepository.findMaxAuditNo(prefix + "%");
-        if(no == null) {
+        if (no == null) {
             no = 1;
         }
         return String.format(prefix + "%03d", no);

@@ -233,7 +233,7 @@ public class SubmissionService {
                     predicates.add(cb.equal(root.get("creatorId").as(Long.class), loginUser.getId()));
                 } else if (!viewAll && new Long(-1).equals(form.getCreatorId())) {
                     predicates.add(cb.equal(root.get("creatorId").as(Long.class), -1L));
-                }else if (!viewAll) {
+                } else if (!viewAll) {
                     predicates.add(cb.equal(root.get("creatorId").as(Long.class), loginUser.getId()));
                 }
                 predicates.add(cb.equal(root.get("del").as(boolean.class), false));
@@ -345,10 +345,10 @@ public class SubmissionService {
         if (comment.getType() == Comment.CommentType.ALLOW) {
 
             this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), "submission_distribution_approver", submission, loginUser);
-            if(submission.getAuditNo() == null) {
+            if (submission.getAuditNo() == null) {
                 this.submissionRepository.updateStatusAndAuditNo(comment.getTargetId(), current.getNextAgree().getStatus(), this.getAuditNo(), loginUser.getId(), new Date());
-            } else{
-                this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextAgree().getStatus(),loginUser.getId(), new Date());
+            } else {
+                this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
             }
         } else {
             this.submissionRepository.updateStatus(comment.getTargetId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
@@ -690,12 +690,34 @@ public class SubmissionService {
         submission.setModifyId(loginUser.getId());
         submission.setModifyTime(new Date());
         this.submissionRepository.save(submission);
-        this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), "submission_filed_approver", submission, loginUser);
+        this.workitemService.createWorkitemWithComplete(form.getWorkitemId(), current.getNextAgree().getStage(), new Long[]{submission.getCreatorId()}, submission, loginUser);
     }
 
-    /**
-     *
-     */
+
+    public void takeAdvice(Comment comment, User loginUser) {
+        Flow current = this.flowService.getCurrentNode("take_advice", Submission.class);
+        Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
+        if (!this.checkSubmissionStatus(submission, current.getStatus())) {
+            throw new SystemException(30000);
+        }
+        comment.setTarget(current.getTarget());
+        comment.setCreator(loginUser);
+        comment.setCreateTime(new Date());
+        comment.setStage(current.getStage());
+        comment.setStageStr(current.getStageStr());
+        comment.setTypeStr(comment.getType() == Comment.CommentType.ALLOW ? current.getAgreeStr() : current.getRejectStr());
+        this.commentRepository.save(comment);
+        submission.setProjectSum(comment.getProjectSum());
+        this.submissionRepository.save(submission);
+        if (comment.getType() == Comment.CommentType.ALLOW) {
+            this.submissionRepository.updateStatus(submission.getId(), current.getNextAgree().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextAgree().getStage(), "submission_filed_approver", submission, loginUser);
+        } else {
+            this.submissionRepository.updateStatus(submission.getId(), current.getNextReject().getStatus(), loginUser.getId(), new Date());
+            this.workitemService.createWorkitemWithComplete(comment.getWorkitemId(), current.getNextReject().getStage(), "submission_audit_second_approver", submission, loginUser);
+        }
+    }
+
     public void completeApprove(Comment comment, User loginUser) {
         Flow current = this.flowService.getCurrentNode("complete", Submission.class);
         Submission submission = this.submissionRepository.findSubmissionById(comment.getTargetId());
@@ -779,7 +801,7 @@ public class SubmissionService {
     private String getAuditNo() {
         String prefix = String.format("JS%d", Calendar.getInstance().get(Calendar.YEAR) - 2000);
         Integer no = this.submissionRepository.findMaxAuditNo(prefix + "%");
-        if(no == null) {
+        if (no == null) {
             no = 1;
         }
         return String.format(prefix + "%03d", no);

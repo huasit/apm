@@ -2,8 +2,7 @@ package com.huasit.apm.business.bid.controller;
 
 import com.google.common.collect.ImmutableMap;
 import com.huasit.apm.business.bid.entity.Bid;
-import com.huasit.apm.business.bid.form.BidAuditFirstForm;
-import com.huasit.apm.business.bid.form.BidAuditSecondForm;
+import com.huasit.apm.business.bid.form.*;
 import com.huasit.apm.business.bid.service.BidService;
 import com.huasit.apm.business.construction.entity.Construction;
 import com.huasit.apm.business.construction.service.ConstructionService;
@@ -176,9 +175,42 @@ public class BidController {
      */
     @ResponseBody
     @PostMapping("/check/approves/")
-    public ResponseEntity<Map<String, Object>> checkApproves(@RequestBody List<Comment> comments, HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> checkApproves(@RequestBody BidCheckApprovesForm form, HttpServletRequest request) {
         User loginUser = this.userLoginService.getLoginUser(request);
-        this.bidService.checkApproves(comments, loginUser);
+        this.bidService.checkApproves(form, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
+
+    /**
+     * 争议处理审批
+     */
+    @ResponseBody
+    @PostMapping("/argue/approve/")
+    public ResponseEntity<Map<String, Object>> argueApprove(@RequestBody BidArgueForm form, HttpServletRequest request) throws Exception {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.bidService.argueApprove(form, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
+
+    /**
+     * 审计处审批
+     */
+    @ResponseBody
+    @PostMapping("/audit/dept/approve/")
+    public ResponseEntity<Map<String, Object>> auditDeptApprove(@RequestBody Comment comment, HttpServletRequest request) throws Exception {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.bidService.auditDeptApprove(comment, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
+
+    /**
+     * 争议处理中审批
+     */
+    @ResponseBody
+    @PostMapping("/argue/reject/approve/")
+    public ResponseEntity<Map<String, Object>> argueRejectApprove(@RequestBody BidArgueRejectForm form, HttpServletRequest request) throws Exception {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.bidService.argueRejectApprove(form, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 
@@ -201,6 +233,17 @@ public class BidController {
     public ResponseEntity<Map<String, Object>> auditFirstApprove(@RequestBody BidAuditSecondForm form, HttpServletRequest request) throws Exception {
         User loginUser = this.userLoginService.getLoginUser(request);
         this.bidService.auditSecondApprove(form, loginUser);
+        return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
+    }
+
+    /**
+     * 征求意见
+     */
+    @ResponseBody
+    @PostMapping("/takeAdvice/")
+    public ResponseEntity<Map<String, Object>> takeAdvice(@RequestBody Comment comment, HttpServletRequest request) throws Exception {
+        User loginUser = this.userLoginService.getLoginUser(request);
+        this.bidService.takeAdvice(comment, loginUser);
         return new ResponseEntity<>(ImmutableMap.of("success", true), HttpStatus.OK);
     }
 

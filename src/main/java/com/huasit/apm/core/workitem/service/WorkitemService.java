@@ -6,8 +6,10 @@ import com.huasit.apm.business.submission.entity.Submission;
 import com.huasit.apm.business.submission.entity.SubmissionRepository;
 import com.huasit.apm.core.flow.entity.Flow;
 import com.huasit.apm.core.flow.service.FlowService;
+import com.huasit.apm.core.role.entity.Role;
 import com.huasit.apm.core.role.entity.RoleGroupUser;
 import com.huasit.apm.core.role.entity.RoleGroupUserRepository;
+import com.huasit.apm.core.role.entity.RoleRepository;
 import com.huasit.apm.core.user.entity.User;
 import com.huasit.apm.core.user.entity.UserRepository;
 import com.huasit.apm.core.workitem.entity.Workitem;
@@ -35,7 +37,7 @@ public class WorkitemService {
      * 创建Submission待办
      */
     public void createWorkitem(String stage, Long[] approverIds, Submission submission, User loginUser) {
-        this.createWorkitem("submission", submission.getId(), stage, approverIds, submission.getCreatorId(),submission.getCreateTime(),loginUser);
+        this.createWorkitem("submission", submission.getId(), stage, approverIds, submission.getCreatorId(), submission.getCreateTime(), loginUser);
     }
 
     /**
@@ -50,7 +52,7 @@ public class WorkitemService {
         for (int n = 0; n < list.size(); n++) {
             approverIds[n] = list.get(n).getUserId();
         }
-        this.createWorkitem("submission", submission.getId(), stage, approverIds,submission.getCreatorId(),submission.getCreateTime(), loginUser);
+        this.createWorkitem("submission", submission.getId(), stage, approverIds, submission.getCreatorId(), submission.getCreateTime(), loginUser);
     }
 
     /**
@@ -82,14 +84,14 @@ public class WorkitemService {
      */
     public void createWorkitemWithApply(String stage, String roleKey, Submission submission, User loginUser) {
         this.createWorkitem(stage, roleKey, submission, loginUser);
-        this.createApplyRecord("submission", submission.getId(),submission.getCreatorId(),submission.getCreateTime(), loginUser);
+        this.createApplyRecord("submission", submission.getId(), submission.getCreatorId(), submission.getCreateTime(), loginUser);
     }
 
     /**
      * 创建Bid待办
      */
     public void createWorkitem(String stage, Long[] approverIds, Bid bid, User loginUser) {
-        this.createWorkitem("bid", bid.getId(), stage, approverIds,bid.getCreatorId(),bid.getCreateTime(), loginUser);
+        this.createWorkitem("bid", bid.getId(), stage, approverIds, bid.getCreatorId(), bid.getCreateTime(), loginUser);
     }
 
     /**
@@ -98,17 +100,18 @@ public class WorkitemService {
     public void createWorkitem(String stage, String roleKey, Bid bid, User loginUser) {
         List<RoleGroupUser> list = this.roleGroupUserRepository.findByRoleRkey(roleKey);
         if (CollectionUtils.isEmpty(list)) {
-            return;
+            Role role = roleRepository.findByRkey(roleKey);
+            throw new SystemException(50000, role.getName());
         }
         Long[] approverIds = new Long[list.size()];
         for (int n = 0; n < list.size(); n++) {
             approverIds[n] = list.get(n).getUserId();
         }
-        this.createWorkitem("bid", bid.getId(), stage, approverIds,bid.getCreatorId(),bid.getCreateTime(), loginUser);
+        this.createWorkitem("bid", bid.getId(), stage, approverIds, bid.getCreatorId(), bid.getCreateTime(), loginUser);
     }
 
     /**
-     * 创建Bid待办
+     * 根据指定人创建待办
      */
     public void createWorkitemWithComplete(Long workitemId, String stage, Long[] approverIds, Bid bid, User loginUser) {
         Workitem workitem = this.workitemRepository.findById(workitemId).orElse(null);
@@ -120,7 +123,7 @@ public class WorkitemService {
     }
 
     /**
-     * 创建Bid待办
+     * 根据指定角色创建待办
      */
     public void createWorkitemWithComplete(Long workitemId, String stage, String roleKey, Bid bid, User loginUser) {
         Workitem workitem = this.workitemRepository.findById(workitemId).orElse(null);
@@ -276,16 +279,16 @@ public class WorkitemService {
                 nextStageStr = nextStageStr + "/" + node.getNextReject().getStageStr();
             }
             workitem.setNextStageStr(nextStageStr);
-            if("submission".equals(workitem.getTarget())) {
+            if ("submission".equals(workitem.getTarget())) {
                 Submission submission = this.submissionRepository.findSubmissionById(workitem.getTargetId());
-                if(submission != null) {
+                if (submission != null) {
                     workitem.setAuditUnit(submission.getAuditUnit());
                     workitem.setAuditNo(submission.getAuditNo());
                     workitem.setProjectName(submission.getProjectName());
                 }
-            } else if("bid".equals(workitem.getTarget())) {
+            } else if ("bid".equals(workitem.getTarget())) {
                 Bid bid = this.bidRepository.findBidById(workitem.getTargetId());
-                if(bid != null) {
+                if (bid != null) {
                     workitem.setAuditNo(bid.getAuditNo());
                     workitem.setProjectName(bid.getProjectName());
                 }
@@ -305,16 +308,16 @@ public class WorkitemService {
             Flow node = flowService.getCurrentNode(workitem.getTarget(), workitem.getStage());
             workitem.setTargetStr(node.getTargetStr());
             workitem.setStageStr(node.getStageStr());
-            if("submission".equals(workitem.getTarget())) {
+            if ("submission".equals(workitem.getTarget())) {
                 Submission submission = this.submissionRepository.findSubmissionById(workitem.getTargetId());
-                if(submission != null) {
+                if (submission != null) {
                     workitem.setAuditUnit(submission.getAuditUnit());
                     workitem.setAuditNo(submission.getAuditNo());
                     workitem.setProjectName(submission.getProjectName());
                 }
-            } else if("bid".equals(workitem.getTarget())) {
+            } else if ("bid".equals(workitem.getTarget())) {
                 Bid bid = this.bidRepository.findBidById(workitem.getTargetId());
-                if(bid != null) {
+                if (bid != null) {
                     workitem.setAuditNo(bid.getAuditNo());
                     workitem.setProjectName(bid.getProjectName());
                 }
@@ -370,4 +373,7 @@ public class WorkitemService {
      */
     @Autowired
     RoleGroupUserRepository roleGroupUserRepository;
+
+    @Autowired
+    RoleRepository roleRepository;
 }
